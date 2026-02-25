@@ -8,8 +8,14 @@ export function middleware(request: NextRequest) {
   const userSession = request.cookies.get('user_session');
   const isAuthenticated = !!userSession;
 
-  // Public routes that don't require authentication
-  const isPublicRoute = pathname === '/' || pathname.startsWith('/api/auth/login');
+  // Handle root route - redirect based on auth status
+  if (pathname === '/') {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
 
   // Admin login page
   const isLoginPage = pathname === '/admin/login';
