@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(psql:*)",
+      "Bash(set:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(dir:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
