@@ -4,7 +4,7 @@ import { reports } from '@/db/schema';
 import { requireAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { generateReportId } from '@/lib/utils/generators';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 // GET /api/reports
 export async function GET() {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
           fileUrl: `/reports/${reportId}.xlsx`,
           generatedAt: new Date(),
         })
-        .where(db.$with('id').eq(newReport.id));
+        .where(eq(reports.id, newReport.id));
     }, 2000);
 
     await logAudit({
