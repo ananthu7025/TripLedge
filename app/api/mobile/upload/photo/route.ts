@@ -1,14 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMobileAuth } from '@/lib/utils/session';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
 
 export async function POST(request: NextRequest) {
     try {
