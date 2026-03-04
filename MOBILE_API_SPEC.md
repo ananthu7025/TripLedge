@@ -50,7 +50,25 @@ Logs the technician out (invalidates session on app side).
 ```
 
 ### [GET] /auth/me
-Get current logged-in technician profile.
+Get current basic session data. (Legacy-like, returns subset of user)
+
+### [GET] /profile
+Get full technician profile details including role.
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "user": {
+    "id": "uuid",
+    "fullName": "John Doe",
+    "email": "tech@tripledge.com",
+    "role": "technician",
+    "status": "active",
+    "avatarUrl": "https://..."
+  }
+}
+```
 
 ---
 
