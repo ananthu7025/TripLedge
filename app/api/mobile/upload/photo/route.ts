@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMobileAuth } from '@/lib/utils/session';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { put } from '@vercel/blob';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -16,24 +15,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
         }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        const ext = file.name.split('.').pop() ?? 'jpg';
+        const filename = `uploads/${uuidv4()}.${ext}`;
 
-        // Create uploads directory if it doesn't exist
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
-        try {
-            await mkdir(uploadDir, { recursive: true });
-        } catch (err) {
-            // Ignore if directory already exists
-        }
+        const blob = await put(filename, file, { access: 'public' });
 
-        const filename = `${uuidv4()}-${file.name}`;
-        const path = join(uploadDir, filename);
-        await writeFile(path, buffer);
-
-        const photoUrl = `/uploads/${filename}`;
-
-        return NextResponse.json({ photoUrl });
+        return NextResponse.json({ photoUrl: blob.url });
     } catch (error: any) {
         if (error.message === 'Unauthorized') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

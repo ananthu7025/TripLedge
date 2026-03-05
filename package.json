@@ -18,6 +18,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.16.0",
     "@types/react-modal": "^3.16.3",
+    "@vercel/blob": "^2.3.1",
     "@vis.gl/react-google-maps": "^1.7.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
