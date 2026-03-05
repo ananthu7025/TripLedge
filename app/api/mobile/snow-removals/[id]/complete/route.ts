@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { snowRemovals } from '@/db/schema';
+import { snowRemovals, jobPhotos } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { eq } from 'drizzle-orm';
@@ -12,7 +12,11 @@ export async function POST(
     try {
         const user = await requireMobileAuth();
         const { id } = await params;
-        const { after_photo, notes } = await request.json();
+        const { after_photos, notes } = await request.json();
+
+        if (!after_photos || !Array.isArray(after_photos) || after_photos.length === 0) {
+            return NextResponse.json({ error: 'after_photos must be a non-empty array' }, { status: 400 });
+        }
 
         const snow = await db.query.snowRemovals.findFirst({
             where: eq(snowRemovals.id, id),
@@ -22,8 +26,8 @@ export async function POST(
             return NextResponse.json({ error: 'Snow removal job not found' }, { status: 404 });
         }
 
-        if (snow.status !== 'in_progress') {
-            return NextResponse.json({ error: 'Snow removal job must be in_progress status to complete' }, { status: 400 });
+        if (snow.status !== 'inspected') {
+            return NextResponse.json({ error: 'Snow removal job must be in inspected status to complete' }, { status: 400 });
         }
 
         await db.update(snowRemovals)
@@ -31,11 +35,20 @@ export async function POST(
                 status: 'completed',
                 completedBy: user.id,
                 completedAt: new Date(),
-                afterPhotoUrl: after_photo,
-                notes: notes,
+                notes: notes ?? null,
                 updatedAt: new Date(),
             })
             .where(eq(snowRemovals.id, id));
+
+        await db.insert(jobPhotos).values(
+            after_photos.map((url: string) => ({
+                jobType: 'snow',
+                jobId: id,
+                photoType: 'after',
+                photoUrl: url,
+                uploadedBy: user.id,
+            }))
+        );
 
         await logAudit({
             userId: user.id,

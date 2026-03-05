@@ -88,7 +88,7 @@ export async function OPTIONS() {
 
     return NextResponse.json({
       pending: statsMap.pending || 0,
-      in_progress: statsMap.in_progress || 0,
+      inspected: statsMap.inspected || 0,
       completed: statsMap.completed || 0,
     });
   } catch (error: any) {

@@ -62,8 +62,11 @@ export const tripInspections = pgTable('trip_inspections', {
   avenueName: varchar('avenue_name', { length: 100 }),
   zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, inspected, completed
-  beforePhotoUrl: varchar('before_photo_url', { length: 255 }),
-  afterPhotoUrl: varchar('after_photo_url', { length: 255 }),
+  capturedLatitude: decimal('captured_latitude', { precision: 10, scale: 7 }),
+  capturedLongitude: decimal('captured_longitude', { precision: 10, scale: 7 }),
+  highPoint: decimal('high_point', { precision: 10, scale: 2 }),
+  lowPoint: decimal('low_point', { precision: 10, scale: 2 }),
+  length: decimal('length', { precision: 10, scale: 2 }),
   notes: text('notes'),
   inspectedAt: timestamp('inspected_at'),
   completedAt: timestamp('completed_at'),
@@ -80,19 +83,37 @@ export const snowRemovals = pgTable('snow_removals', {
   id: uuid('id').primaryKey().defaultRandom(),
   snowId: varchar('snow_id', { length: 20 }).unique().notNull(), // S-001, S-002...
   zoneId: uuid('zone_id').references(() => zones.id).notNull(),
-  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician starts the job
+  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician marks as inspected
   completedBy: uuid('completed_by').references(() => users.id), // filled when technician marks as completed
-  placeName: varchar('place_name', { length: 100 }),
-  locationDetails: text('location_details'),
+  streetName: varchar('street_name', { length: 100 }),
+  avenueName: varchar('avenue_name', { length: 100 }),
   zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
-  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, in_progress, completed
-  beforePhotoUrl: varchar('before_photo_url', { length: 255 }),
-  afterPhotoUrl: varchar('after_photo_url', { length: 255 }),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, inspected, completed
+  capturedLatitude: decimal('captured_latitude', { precision: 10, scale: 7 }),
+  capturedLongitude: decimal('captured_longitude', { precision: 10, scale: 7 }),
+  highPoint: decimal('high_point', { precision: 10, scale: 2 }),
+  lowPoint: decimal('low_point', { precision: 10, scale: 2 }),
+  length: decimal('length', { precision: 10, scale: 2 }),
   notes: text('notes'),
+  inspectedAt: timestamp('inspected_at'),
   completedAt: timestamp('completed_at'),
   createdBy: uuid('created_by').references(() => users.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ─────────────────────────────
+// JOB PHOTOS
+// ─────────────────────────────
+
+export const jobPhotos = pgTable('job_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobType: varchar('job_type', { length: 20 }).notNull(), // 'trip' | 'snow'
+  jobId: uuid('job_id').notNull(),                        // tripInspections.id or snowRemovals.id
+  photoType: varchar('photo_type', { length: 20 }).notNull(), // 'before' | 'after'
+  photoUrl: varchar('photo_url', { length: 255 }).notNull(),
+  uploadedBy: uuid('uploaded_by').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ─────────────────────────────
@@ -266,6 +287,13 @@ export const snowRemovalsRelations = relations(snowRemovals, ({ one }) => ({
   }),
   createdByUser: one(users, {
     fields: [snowRemovals.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const jobPhotosRelations = relations(jobPhotos, ({ one }) => ({
+  uploadedByUser: one(users, {
+    fields: [jobPhotos.uploadedBy],
     references: [users.id],
   }),
 }));

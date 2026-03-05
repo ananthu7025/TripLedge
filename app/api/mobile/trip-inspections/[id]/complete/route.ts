@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { tripInspections } from '@/db/schema';
+import { tripInspections, jobPhotos } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { eq } from 'drizzle-orm';
@@ -12,7 +12,11 @@ export async function POST(
     try {
         const user = await requireMobileAuth();
         const { id } = await params;
-        const { after_photo, notes } = await request.json();
+        const { after_photos, notes } = await request.json();
+
+        if (!after_photos || !Array.isArray(after_photos) || after_photos.length === 0) {
+            return NextResponse.json({ error: 'after_photos must be a non-empty array' }, { status: 400 });
+        }
 
         const trip = await db.query.tripInspections.findFirst({
             where: eq(tripInspections.id, id),
@@ -31,11 +35,20 @@ export async function POST(
                 status: 'completed',
                 completedBy: user.id,
                 completedAt: new Date(),
-                afterPhotoUrl: after_photo,
-                notes: notes,
+                notes: notes ?? null,
                 updatedAt: new Date(),
             })
             .where(eq(tripInspections.id, id));
+
+        await db.insert(jobPhotos).values(
+            after_photos.map((url: string) => ({
+                jobType: 'trip',
+                jobId: id,
+                photoType: 'after',
+                photoUrl: url,
+                uploadedBy: user.id,
+            }))
+        );
 
         await logAudit({
             userId: user.id,

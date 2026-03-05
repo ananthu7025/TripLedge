@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       const [snow] = await db.insert(snowRemovals).values({
         snowId,
         zoneId: newZone.id,
-        placeName: name,
+        streetName: name,
         zoneType,
         status: 'pending',
         createdBy: user.id,

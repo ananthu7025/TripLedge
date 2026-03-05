@@ -23,7 +23,7 @@ interface Stats {
     };
     snow: {
         pending: number;
-        in_progress: number;
+        inspected: number;
         completed: number;
     };
     checkinRequests: number;
@@ -32,7 +32,7 @@ interface Stats {
 export default function DashboardPage() {
     const [stats, setStats] = useState<Stats>({
         trip: { pending: 0, inspected: 0, completed: 0 },
-        snow: { pending: 0, in_progress: 0, completed: 0 },
+        snow: { pending: 0, inspected: 0, completed: 0 },
         checkinRequests: 0,
     });
     const [loading, setLoading] = useState(true);
@@ -128,10 +128,10 @@ export default function DashboardPage() {
                                 <p className="text-2xl font-bold text-muted-foreground">{stats.snow.pending}</p>
                                 <p className="text-[11px] text-muted-foreground">Pending</p>
                             </Link>
-                            <Link href="/admin/snow-removal?status=in_progress"
+                            <Link href="/admin/snow-removal?status=inspected"
                                 className="text-center p-3 rounded-lg bg-warning/10 hover:bg-warning/20 transition-colors block">
-                                <p className="text-2xl font-bold text-warning">{stats.snow.in_progress}</p>
-                                <p className="text-[11px] text-muted-foreground">In Progress</p>
+                                <p className="text-2xl font-bold text-warning">{stats.snow.inspected}</p>
+                                <p className="text-[11px] text-muted-foreground">Inspected</p>
                             </Link>
                             <Link href="/admin/snow-removal?status=completed"
                                 className="text-center p-3 rounded-lg bg-success/10 hover:bg-success/20 transition-colors block">

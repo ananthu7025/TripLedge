@@ -11,7 +11,7 @@ export async function GET() {
         const snows = await db.query.snowRemovals.findMany({
             where: or(
                 eq(snowRemovals.status, 'pending'),
-                eq(snowRemovals.status, 'in_progress')
+                eq(snowRemovals.status, 'inspected')
             ),
             orderBy: [desc(snowRemovals.createdAt)],
             with: {

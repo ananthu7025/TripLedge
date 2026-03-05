@@ -28,12 +28,13 @@ export default async function SnowRemovalPage() {
     const formattedRemovals: SnowRemoval[] = removals.map((s) => ({
         id: s.id,
         snowId: s.snowId,
-        placeName: s.placeName,
-        locationDetails: s.locationDetails,
+        streetName: s.streetName,
+        avenueName: s.avenueName,
         zoneType: s.zoneType as any,
         status: s.status as any,
         notes: s.notes,
         createdAt: s.createdAt?.toISOString() || "",
+        inspectedAt: s.inspectedAt?.toISOString() || null,
         completedAt: s.completedAt?.toISOString() || null,
         zoneId: s.zoneId,
         zone: {

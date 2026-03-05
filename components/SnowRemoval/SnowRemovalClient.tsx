@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { cn } from "@/app/utils/utils";
@@ -37,8 +38,8 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(s =>
                 s.snowId.toLowerCase().includes(query) ||
-                s.placeName?.toLowerCase().includes(query) ||
-                s.locationDetails?.toLowerCase().includes(query) ||
+                s.streetName?.toLowerCase().includes(query) ||
+                s.avenueName?.toLowerCase().includes(query) ||
                 s.zone.name.toLowerCase().includes(query)
             );
         }
@@ -49,21 +50,21 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
     const counts = useMemo(() => ({
         all: initialRemovals.length,
         pending: initialRemovals.filter(s => s.status === 'pending').length,
-        in_progress: initialRemovals.filter(s => s.status === 'in_progress').length,
+        inspected: initialRemovals.filter(s => s.status === 'inspected').length,
         completed: initialRemovals.filter(s => s.status === 'completed').length,
     }), [initialRemovals]);
 
     const tabs = [
         { label: "All", value: "all", count: counts.all },
         { label: "Pending", value: "pending", count: counts.pending },
-        { label: "In Progress", value: "in_progress", count: counts.in_progress },
+        { label: "Inspected", value: "inspected", count: counts.inspected },
         { label: "Completed", value: "completed", count: counts.completed },
     ];
 
     const getStatusVariant = (status: string): 'warning' | 'default' | 'success' | 'outline' | 'secondary' => {
         switch (status) {
             case 'pending': return 'warning';
-            case 'in_progress': return 'secondary'; // Using secondary for in_progress to match the blue style
+            case 'inspected': return 'secondary';
             case 'completed': return 'success';
             default: return 'outline';
         }
@@ -127,8 +128,8 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                                     </TableCell>
                                     <TableCell className="px-6 py-5">
                                         <div className="space-y-0.5">
-                                            <p className="text-sm font-bold text-slate-900">{removal.placeName || 'N/A'}</p>
-                                            <p className="text-[11px] font-medium text-slate-400">{removal.locationDetails || 'N/A'}</p>
+                                            <p className="text-sm font-bold text-slate-900">{removal.streetName || 'N/A'}</p>
+                                            <p className="text-[11px] font-medium text-slate-400">{removal.avenueName || 'N/A'}</p>
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell px-6 py-5">
@@ -147,11 +148,11 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                                                 className={cn(
                                                     "text-[11px] font-bold px-5 py-1.5 rounded-full border-0 min-w-[100px] justify-center tracking-wide",
                                                     removal.status === 'pending' && "bg-orange-100 text-orange-600",
-                                                    removal.status === 'in_progress' && "bg-orange-500 text-white shadow-lg shadow-orange-500/20",
+                                                    removal.status === 'inspected' && "bg-orange-500 text-white shadow-lg shadow-orange-500/20",
                                                     removal.status === 'completed' && "bg-emerald-100 text-emerald-600"
                                                 )}
                                             >
-                                                {removal.status.replace('_', ' ').charAt(0).toUpperCase() + removal.status.replace('_', ' ').slice(1)}
+                                                {removal.status.charAt(0).toUpperCase() + removal.status.slice(1)}
                                             </Badge>
                                         </div>
                                     </TableCell>
