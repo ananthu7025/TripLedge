@@ -3,7 +3,6 @@ import { db } from '@/db';
 import { zones, tripInspections, snowRemovals } from '@/db/schema';
 import { requireAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
-import { generateTripId, generateSnowId } from '@/lib/utils/generators';
 import { eq, desc } from 'drizzle-orm';
 
 // GET /api/zones - Get all zones
@@ -59,48 +58,18 @@ export async function POST(request: NextRequest) {
       createdBy: user.id,
     }).returning();
 
-    // Automatically create jobs based on module
-    const jobsCreated: any[] = [];
-
-    if (module === 'trip' || module === 'both') {
-      const tripId = await generateTripId();
-      const [trip] = await db.insert(tripInspections).values({
-        tripId,
-        zoneId: newZone.id,
-        streetName: name,
-        zoneType,
-        status: 'pending',
-        createdBy: user.id,
-      }).returning();
-      jobsCreated.push({ type: 'trip', id: trip.tripId });
-    }
-
-    if (module === 'snow' || module === 'both') {
-      const snowId = await generateSnowId();
-      const [snow] = await db.insert(snowRemovals).values({
-        snowId,
-        zoneId: newZone.id,
-        streetName: name,
-        zoneType,
-        status: 'pending',
-        createdBy: user.id,
-      }).returning();
-      jobsCreated.push({ type: 'snow', id: snow.snowId });
-    }
-
     await logAudit({
       userId: user.id,
       action: 'create_zone',
       module: 'zones',
       entityType: 'zone',
       entityId: newZone.id,
-      metadata: { zoneName: name, module, jobsCreated },
+      metadata: { zoneName: name, module },
     });
 
     return NextResponse.json({
       success: true,
       zone: newZone,
-      jobsCreated,
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {

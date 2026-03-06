@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Trip Ledge mobile app is used by **technicians** to manage trip hazard inspection and snow removal jobs. Jobs are created by the admin on the web platform. The technician sees them on mobile, fills in inspection details, and marks them as done.
+The Trip Ledge mobile app is used by **technicians** to manage trip hazard inspection and snow removal jobs. The admin draws inspection areas (zones) on the web platform. The technician sees those zones on mobile, navigates to the start point, creates the job on-site with exact GPS coordinates, and then marks it as done.
 
 ---
 
@@ -40,49 +40,44 @@ Every day, before starting work, the technician must check in.
 
 ---
 
-## Step 3 — View Job List
+## Step 3 — View Zones on Map
 
-After check-in, the technician sees a list of active jobs.
+After check-in, the technician sees all active inspection zones on a map.
 
-- Call `GET /api/mobile/trip-inspections` for trip inspection jobs
-- Call `GET /api/mobile/snow-removals` for snow removal jobs
-- Both return only **pending** and **inspected** jobs (completed jobs are hidden)
+- Call `GET /api/mobile/zones`
+- Each zone includes a `startPoint: { lat, lng }` — the first GPS point the admin drew
+- Show each zone as a **map pin** at its start point so the technician knows where to go
+- The zone also contains `pointsGeojson` if you want to draw the full area polyline
 
-Each job card shows:
-- Job ID (e.g. `T-001`, `S-001`)
+Each zone card shows:
 - Zone name
-- Status badge: `Pending` or `Inspected`
-- Job type: Trip or Snow
+- Zone type: `Proposed` or `Additional`
+- Module: `trip`, `snow`, or `both`
+- Priority: `high`, `medium`, or `low`
 
 ---
 
-## Step 4 — Open a Pending Job
+## Step 4 — Navigate to Zone
 
-The technician taps a **Pending** job to view its details.
+The technician taps a zone to see its details.
 
-- Call `GET /api/mobile/trip-inspections/:id` or `GET /api/mobile/snow-removals/:id`
-- The response includes:
-  - Full job details (zone, zone type, status)
-  - `startPoint: { lat, lng }` — the first GPS point of the zone polyline → **show this as a map pin** so the technician knows where to go
-  - `beforePhotos: []` — empty at this stage (job is pending)
-  - `afterPhotos: []` — empty at this stage
-
-**The map pin:**
-Use `startPoint.lat` and `startPoint.lng` to drop a pin on a map widget (Google Maps / Apple Maps). The technician can tap it to navigate to the job location.
+- The `startPoint` is shown as a map pin
+- The technician taps it to navigate to the location using Google Maps / Apple Maps
+- The technician physically travels to the start point of the zone
 
 ---
 
-## Step 5 — Fill "Start Job" Form (Pending → Inspected)
+## Step 5 — Add Job On-Site (Creates Job → Inspected)
 
-When the technician arrives at the location and is ready to begin, they tap **Start Job**.
+When the technician arrives at the location and is ready to begin, they tap **"Add Job"**.
 
 A form appears with these fields:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| Assigned Location Type | Display only | — | From zone (`proposed` or `additional`) — shown to technician, not editable |
-| Location | Display only | — | Zone name shown |
-| Proposed Zone | Display only | — | Zone type label |
+| Zone Name | Display only | — | Zone name shown |
+| Zone Type | Display only | — | `Proposed` or `Additional` |
+| Module | Display only | — | `Trip`, `Snow`, or `Both` |
 | Location Captured | GPS auto-fill | — | Device captures current lat/lng; displayed as `10.032798, 76.335989` |
 | Street Name | Text input | ✅ Yes | e.g., `100th Street` |
 | Avenue / Cross Street | Text input | No | e.g., `17th Avenue` |
@@ -99,26 +94,43 @@ A form appears with these fields:
 5. Include this array as `before_photos` when submitting the form
 
 **Submit the form:**
-- Call `PATCH /api/mobile/trip-inspections/:id/start` (or `/snow-removals/:id/start`)
+- Call `POST /api/mobile/zones/:id/add-job`
 - Send `street_name`, `before_photos[]`, and any optional fields
-- On success: status changes from **Pending → Inspected**
-- The job now appears in the Inspected tab
+- On success: trip and/or snow job record(s) are **created** and immediately set to **Inspected**
+- The response returns `jobsCreated` with the IDs of each created job
+- The job(s) now appear in the Inspected tab of the job list
 
 ---
 
-## Step 6 — Open an Inspected Job
+## Step 6 — View Job List (Inspected Jobs)
 
-The technician taps an **Inspected** job they previously started.
+After adding a job, the technician can see it in the job list.
+
+- Call `GET /api/mobile/trip-inspections` for trip inspection jobs
+- Call `GET /api/mobile/snow-removals` for snow removal jobs
+- Both return only **pending** and **inspected** jobs (completed jobs are hidden)
+
+Each job card shows:
+- Job ID (e.g. `T-001`, `S-001`)
+- Zone name
+- Status badge: `Inspected`
+- Job type: Trip or Snow
+
+---
+
+## Step 7 — Open an Inspected Job
+
+The technician taps an **Inspected** job they previously created.
 
 - Call `GET /api/mobile/trip-inspections/:id` or `GET /api/mobile/snow-removals/:id`
-- The response now includes:
+- The response includes:
   - All fields filled during Step 5 (street name, avenue, dimensions, GPS)
   - `startPoint` — map pin still shown
   - `beforePhotos: ["url1", "url2"]` — show these as reference photos in the completion form
 
 ---
 
-## Step 7 — Fill "Complete" Form (Inspected → Completed)
+## Step 8 — Fill "Complete" Form (Inspected → Completed)
 
 When the technician finishes the work, they tap **Complete**.
 
@@ -151,19 +163,21 @@ A form appears with:
 ## Full Status Lifecycle
 
 ```
-Admin creates zone
+Admin draws zone on map (marks inspection area)
        │
+       │  No job created yet — zone is just a marked area
        ▼
-  ┌─────────┐
-  │ PENDING │  ← Job visible in list
-  └─────────┘
+  ┌─────────────────────────────────────┐
+  │  ZONE (active, visible on mobile)  │  ← Technician sees zone on map
+  └─────────────────────────────────────┘
        │
-       │  Technician fills Start Job form
+       │  Technician travels to startPoint
+       │  Technician fills "Add Job" form on-site
        │  (street, avenue, GPS, dimensions, before photos)
-       │  PATCH /trip-inspections/:id/start
+       │  POST /zones/:id/add-job
        ▼
   ┌──────────┐
-  │ INSPECTED│  ← Job still visible in list
+  │ INSPECTED│  ← Job created and immediately inspected
   └──────────┘
        │
        │  Technician fills Complete form
@@ -306,7 +320,7 @@ Submit technician's current GPS location for check-in verification.
   "auto_approved": true
 }
 ```
-→ Attendance is recorded. Proceed to job list.
+→ Attendance is recorded. Proceed to zone map.
 
 **Response 200 — Pending approval (outside 200m):**
 ```json
@@ -347,7 +361,7 @@ or
 ## 3. Photo Upload
 
 ### POST /upload/photo
-Upload a single photo. Call this **before** submitting the Start Job or Complete form.
+Upload a single photo. Call this **before** submitting the Add Job or Complete form.
 
 **Request:** `multipart/form-data`
 
@@ -367,11 +381,107 @@ Upload a single photo. Call this **before** submitting the Start Job or Complete
 { "error": "No file uploaded" }
 ```
 
-> **Usage:** Upload each photo individually. Collect all `photoUrl` strings into an array and pass them as `before_photos` or `after_photos` when calling start/complete endpoints.
+> **Usage:** Upload each photo individually. Collect all `photoUrl` strings into an array and pass them as `before_photos` or `after_photos` when calling add-job/complete endpoints.
 
 ---
 
-## 4. Trip Inspections
+## 4. Zones
+
+### GET /zones
+Get all active zones for the technician to view on the map.
+
+**Response 200:**
+```json
+{
+  "zones": [
+    {
+      "id": "uuid",
+      "name": "North Zone",
+      "zoneType": "proposed",
+      "module": "trip",
+      "priority": "high",
+      "startPoint": {
+        "lat": 10.032798,
+        "lng": 76.335989
+      },
+      "pointsGeojson": "[{\"lat\":10.032798,\"lng\":76.335989,\"order\":0}]",
+      "totalPoints": 5,
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+> `startPoint` is the first coordinate of the zone polyline. Use this to show a map pin and help the technician navigate to the location.
+
+---
+
+### POST /zones/:id/add-job
+Technician submits the Add Job form after arriving at the zone start point. Creates trip and/or snow job record(s) based on the zone's module and immediately marks them as **Inspected**.
+
+**Request Body:**
+```json
+{
+  "street_name": "100th Street",
+  "avenue_name": "17th Avenue",
+  "high_point": 3.5,
+  "low_point": 1.2,
+  "length": 8.3,
+  "captured_latitude": 10.032798,
+  "captured_longitude": 76.335989,
+  "before_photos": [
+    "/uploads/photo1.jpg",
+    "/uploads/photo2.jpg"
+  ]
+}
+```
+
+| Field | Type | Required |
+|-------|------|----------|
+| `street_name` | string | ✅ Yes |
+| `before_photos` | string[] (min 1) | ✅ Yes |
+| `avenue_name` | string | No |
+| `high_point` | number | No |
+| `low_point` | number | No |
+| `length` | number | No |
+| `captured_latitude` | number | No |
+| `captured_longitude` | number | No |
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "jobsCreated": [
+    { "type": "trip", "id": "uuid", "jobId": "T-001" },
+    { "type": "snow", "id": "uuid", "jobId": "S-001" }
+  ]
+}
+```
+
+> `jobsCreated` will contain one entry for `module: "trip"` or `module: "snow"`, and two entries for `module: "both"`.
+
+**Response 400 — Missing required fields:**
+```json
+{ "error": "street_name is required" }
+```
+or
+```json
+{ "error": "before_photos must be a non-empty array" }
+```
+
+**Response 400 — Job already exists:**
+```json
+{ "error": "A trip inspection job already exists for this zone" }
+```
+
+**Response 404:**
+```json
+{ "error": "Zone not found" }
+```
+
+---
+
+## 5. Trip Inspections
 
 ### GET /trip-inspections
 Get all active (pending + inspected) trip inspection jobs.
@@ -384,16 +494,16 @@ Get all active (pending + inspected) trip inspection jobs.
       "id": "uuid",
       "tripId": "T-001",
       "zoneId": "uuid",
-      "streetName": null,
-      "avenueName": null,
+      "streetName": "100th Street",
+      "avenueName": "17th Avenue",
       "zoneType": "proposed",
-      "status": "pending",
-      "highPoint": null,
-      "lowPoint": null,
-      "length": null,
-      "capturedLatitude": null,
-      "capturedLongitude": null,
-      "inspectedAt": null,
+      "status": "inspected",
+      "highPoint": "3.50",
+      "lowPoint": "1.20",
+      "length": "8.30",
+      "capturedLatitude": "10.0327980",
+      "capturedLongitude": "76.3359890",
+      "inspectedAt": "2025-01-15T09:00:00.000Z",
       "completedAt": null,
       "createdAt": "2025-01-01T00:00:00.000Z",
       "zone": {
@@ -460,66 +570,6 @@ Get full details of one trip inspection job including map start point and photos
 }
 ```
 
-> `startPoint` is the first coordinate of the zone polyline. Use this to show a map pin.
-> `beforePhotos` / `afterPhotos` come from the job_photos table.
-
----
-
-### PATCH /trip-inspections/:id/start
-Submit the inspection form and change status from `pending` → `inspected`.
-
-**Request Body:**
-```json
-{
-  "street_name": "100th Street",
-  "avenue_name": "17th Avenue",
-  "high_point": 3.5,
-  "low_point": 1.2,
-  "length": 8.3,
-  "captured_latitude": 10.032798,
-  "captured_longitude": 76.335989,
-  "before_photos": [
-    "/uploads/photo1.jpg",
-    "/uploads/photo2.jpg"
-  ]
-}
-```
-
-| Field | Type | Required |
-|-------|------|----------|
-| `street_name` | string | ✅ Yes |
-| `before_photos` | string[] (min 1) | ✅ Yes |
-| `avenue_name` | string | No |
-| `high_point` | number | No |
-| `low_point` | number | No |
-| `length` | number | No |
-| `captured_latitude` | number | No |
-| `captured_longitude` | number | No |
-
-**Response 200:**
-```json
-{ "success": true }
-```
-
-**Response 400 — Missing required fields:**
-```json
-{ "error": "street_name is required" }
-```
-or
-```json
-{ "error": "before_photos must be a non-empty array" }
-```
-
-**Response 400 — Wrong status:**
-```json
-{ "error": "Trip is already started or completed" }
-```
-
-**Response 404:**
-```json
-{ "error": "Trip not found" }
-```
-
 ---
 
 ### POST /trip-inspections/:id/complete
@@ -557,9 +607,9 @@ Submit the completion form and change status from `inspected` → `completed`.
 
 ---
 
-## 5. Snow Removals
+## 6. Snow Removals
 
-Snow removal endpoints follow the **exact same structure** as trip inspections. The status lifecycle is also identical: `pending → inspected → completed`.
+Snow removal endpoints follow the **exact same structure** as trip inspections. The status lifecycle is also identical: jobs are created as `inspected` (via `/zones/:id/add-job`) then move to `completed`.
 
 ---
 
@@ -574,16 +624,16 @@ Get all active (pending + inspected) snow removal jobs.
       "id": "uuid",
       "snowId": "S-001",
       "zoneId": "uuid",
-      "streetName": null,
-      "avenueName": null,
+      "streetName": "101st Street",
+      "avenueName": "18th Avenue",
       "zoneType": "proposed",
-      "status": "pending",
-      "highPoint": null,
-      "lowPoint": null,
-      "length": null,
-      "capturedLatitude": null,
-      "capturedLongitude": null,
-      "inspectedAt": null,
+      "status": "inspected",
+      "highPoint": "2.00",
+      "lowPoint": "0.50",
+      "length": "12.00",
+      "capturedLatitude": "10.0330000",
+      "capturedLongitude": "76.3360000",
+      "inspectedAt": "2025-01-15T10:00:00.000Z",
       "completedAt": null,
       "createdAt": "2025-01-01T00:00:00.000Z",
       "zone": {
@@ -636,39 +686,10 @@ Get full details of one snow removal job.
 
 ---
 
-### PATCH /snow-removals/:id/start
-Submit the inspection form for a snow removal job. Status: `pending → inspected`.
-
-**Request Body:** *(identical structure to trip inspection start)*
-```json
-{
-  "street_name": "101st Street",
-  "avenue_name": "18th Avenue",
-  "high_point": 2.0,
-  "low_point": 0.5,
-  "length": 12.0,
-  "captured_latitude": 10.033000,
-  "captured_longitude": 76.336000,
-  "before_photos": ["/uploads/snow-before1.jpg"]
-}
-```
-
-**Response 200:**
-```json
-{ "success": true }
-```
-
-**Response 400 — Wrong status:**
-```json
-{ "error": "Snow removal job is already started or completed" }
-```
-
----
-
 ### POST /snow-removals/:id/complete
 Submit the completion form. Status: `inspected → completed`.
 
-**Request Body:** *(identical structure to trip inspection complete)*
+**Request Body:**
 ```json
 {
   "after_photos": ["/uploads/snow-after1.jpg"],
@@ -710,8 +731,9 @@ Submit the completion form. Status: `inspected → completed`.
 |-------|---------|-----------|---------|
 | `id` | UUID | string | `"3f8e2a1b-..."` |
 | `tripId` / `snowId` | VARCHAR | string | `"T-001"`, `"S-001"` |
-| `status` | VARCHAR | string | `"pending"`, `"inspected"`, `"completed"` |
+| `status` | VARCHAR | string | `"inspected"`, `"completed"` |
 | `zoneType` | VARCHAR | string | `"proposed"`, `"additional"` |
+| `module` | VARCHAR | string | `"trip"`, `"snow"`, `"both"` |
 | `highPoint` / `lowPoint` / `length` | DECIMAL | string (from DB) | `"8.30"` |
 | `capturedLatitude` / `capturedLongitude` | DECIMAL | string (from DB) | `"10.0327980"` |
 | `inspectedAt` / `completedAt` | TIMESTAMP | string (ISO 8601) or null | `"2025-01-15T09:00:00.000Z"` |
@@ -733,11 +755,11 @@ Submit the completion form. Status: `inspected → completed`.
 | POST | `/checkin/verify-location` | Yes | Check-in |
 | GET | `/checkin/request-status/:requestId` | Yes | Check-in status |
 | POST | `/upload/photo` | Yes | Upload photo |
+| GET | `/zones` | Yes | List all active zones with start points |
+| POST | `/zones/:id/add-job` | Yes | Create job(s) on-site from zone |
 | GET | `/trip-inspections` | Yes | List active trips |
 | GET | `/trip-inspections/:id` | Yes | Trip detail + map + photos |
-| PATCH | `/trip-inspections/:id/start` | Yes | Start job (fill form) |
 | POST | `/trip-inspections/:id/complete` | Yes | Complete job |
 | GET | `/snow-removals` | Yes | List active snow jobs |
 | GET | `/snow-removals/:id` | Yes | Snow detail + map + photos |
-| PATCH | `/snow-removals/:id/start` | Yes | Start job (fill form) |
 | POST | `/snow-removals/:id/complete` | Yes | Complete job |
