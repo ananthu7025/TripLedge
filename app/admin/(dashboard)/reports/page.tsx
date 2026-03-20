@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Eye, Download, FileText } from "lucide-react";
+import { Search, Eye, Download, FileText, X, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Report {
@@ -27,6 +27,7 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchReports();
@@ -50,11 +51,9 @@ export default function ReportsPage() {
 
     const applyFilters = () => {
         let filtered = reports;
-
         if (activeFilter !== "all") {
             filtered = filtered.filter(r => r.type.toLowerCase() === activeFilter);
         }
-
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(r =>
@@ -62,7 +61,6 @@ export default function ReportsPage() {
                 r.reportId.toLowerCase().includes(query)
             );
         }
-
         setFilteredReports(filtered);
     };
 
@@ -88,7 +86,10 @@ export default function ReportsPage() {
                     <h1 className="text-2xl font-bold text-foreground">Report</h1>
                     <p className="text-sm text-muted-foreground">View and download completed reports</p>
                 </div>
-                <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+                <button
+                    onClick={() => setShowModal(true)}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
+                >
                     <FileText className="h-4 w-4" /> Generate Report
                 </button>
             </div>
@@ -96,9 +97,9 @@ export default function ReportsPage() {
             {/* Tabs */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="inline-flex h-9 items-center justify-center rounded-lg bg-secondary p-1 text-muted-foreground">
-                    <TabButton label="All" count={counts.all} active={activeFilter === "all"} onClick={() => setActiveFilter("all")} />
-                    <TabButton label="Trip" count={counts.trip} active={activeFilter === "trip"} onClick={() => setActiveFilter("trip")} />
-                    <TabButton label="Snow" count={counts.snow} active={activeFilter === "snow"} onClick={() => setActiveFilter("snow")} />
+                    <TabButton label="All"        count={counts.all}        active={activeFilter === "all"}        onClick={() => setActiveFilter("all")} />
+                    <TabButton label="Trip"       count={counts.trip}       active={activeFilter === "trip"}       onClick={() => setActiveFilter("trip")} />
+                    <TabButton label="Snow"       count={counts.snow}       active={activeFilter === "snow"}       onClick={() => setActiveFilter("snow")} />
                     <TabButton label="Attendance" count={counts.attendance} active={activeFilter === "attendance"} onClick={() => setActiveFilter("attendance")} />
                 </div>
                 <div className="relative flex-1 max-w-sm ml-auto">
@@ -137,18 +138,160 @@ export default function ReportsPage() {
                                 </tr>
                             ) : (
                                 filteredReports.map((report) => (
-                                    <ReportTableRow key={report.id} report={report} />
+                                    <ReportTableRow key={report.id} report={report} onRefresh={fetchReports} />
                                 ))
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {showModal && (
+                <GenerateReportModal
+                    onClose={() => setShowModal(false)}
+                    onSuccess={() => {
+                        setShowModal(false);
+                        fetchReports();
+                    }}
+                />
+            )}
         </>
     );
 }
 
-function TabButton({ label, count, active = false, onClick }: { label: string, count?: number, active?: boolean, onClick?: () => void }) {
+// ------------------------------------------------------------------
+// Generate Report Modal
+// ------------------------------------------------------------------
+function GenerateReportModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+    const [title, setTitle] = useState('');
+    const [type, setType] = useState('trip');
+    const [dateRangeStart, setDateRangeStart] = useState('');
+    const [dateRangeEnd, setDateRangeEnd] = useState('');
+    const [relatedId, setRelatedId] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title.trim()) { setError('Title is required.'); return; }
+        setSubmitting(true);
+        setError('');
+        try {
+            const res = await fetch('/api/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title.trim(),
+                    type,
+                    dateRangeStart: dateRangeStart || null,
+                    dateRangeEnd: dateRangeEnd || null,
+                    relatedId: relatedId.trim() || null,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) { setError(data.error || 'Failed to generate report.'); return; }
+            onSuccess();
+        } catch {
+            setError('Network error. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-background rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg font-bold text-foreground">Generate Report</h2>
+                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Title *</label>
+                        <input
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            placeholder="e.g. Weekly Trip Report"
+                            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Type *</label>
+                        <select
+                            value={type}
+                            onChange={e => setType(e.target.value)}
+                            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                            <option value="trip">Trip Inspection</option>
+                            <option value="snow">Snow Removal</option>
+                            <option value="attendance">Attendance</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">From</label>
+                            <input
+                                type="date"
+                                value={dateRangeStart}
+                                onChange={e => setDateRangeStart(e.target.value)}
+                                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">To</label>
+                            <input
+                                type="date"
+                                value={dateRangeEnd}
+                                onChange={e => setDateRangeEnd(e.target.value)}
+                                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Related ID <span className="text-muted-foreground font-normal">(optional)</span></label>
+                        <input
+                            value={relatedId}
+                            onChange={e => setRelatedId(e.target.value)}
+                            placeholder="e.g. T-003 or S-001"
+                            className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                    </div>
+
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+
+                    <div className="flex gap-3 pt-1">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 h-9 rounded-md border border-input text-sm font-medium hover:bg-muted"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="flex-1 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                        >
+                            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {submitting ? 'Generating…' : 'Generate'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+// ------------------------------------------------------------------
+// Helpers
+// ------------------------------------------------------------------
+function TabButton({ label, count, active = false, onClick }: { label: string; count?: number; active?: boolean; onClick?: () => void }) {
     return (
         <button
             onClick={onClick}
@@ -159,46 +302,52 @@ function TabButton({ label, count, active = false, onClick }: { label: string, c
     );
 }
 
-function ReportTableRow({ report }: { report: Report }) {
+function ReportTableRow({ report, onRefresh }: { report: Report; onRefresh: () => void }) {
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'ready':
-                return 'bg-success/10 text-success border-success/20';
-            case 'generating':
-                return 'bg-warning/10 text-warning border-warning/20';
-            default:
-                return 'bg-muted text-muted-foreground border-muted';
+            case 'ready':      return 'bg-success/10 text-success border-success/20';
+            case 'generating': return 'bg-warning/10 text-warning border-warning/20';
+            default:           return 'bg-muted text-muted-foreground border-muted';
         }
     };
 
     const getTypeColor = (type: string) => {
         switch (type.toLowerCase()) {
-            case 'trip':
-                return 'bg-primary/10 text-primary border-primary/20';
-            case 'snow':
-                return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-            case 'attendance':
-                return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-            default:
-                return 'bg-muted text-muted-foreground border-muted';
+            case 'trip':       return 'bg-primary/10 text-primary border-primary/20';
+            case 'snow':       return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+            case 'attendance': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+            default:           return 'bg-muted text-muted-foreground border-muted';
         }
     };
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '—';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const dateRange = report.dateRangeStart && report.dateRangeEnd
-        ? `${formatDate(report.dateRangeStart)} - ${formatDate(report.dateRangeEnd)}`
-        : report.dateRangeStart
-            ? formatDate(report.dateRangeStart)
-            : '—';
+        ? `${formatDate(report.dateRangeStart)} – ${formatDate(report.dateRangeEnd)}`
+        : report.dateRangeStart ? formatDate(report.dateRangeStart) : '—';
+
+    const handleDownload = () => {
+        if (!report.fileUrl) return;
+        const url = report.fileUrl.startsWith('http')
+            ? report.fileUrl
+            : `${window.location.origin}${report.fileUrl}`;
+        window.open(url, '_blank');
+    };
+
+    const handleView = () => {
+        if (!report.fileUrl) return;
+        const url = report.fileUrl.startsWith('http')
+            ? report.fileUrl
+            : `${window.location.origin}${report.fileUrl}`;
+        window.open(url, '_blank');
+    };
 
     return (
         <tr className="border-b transition-colors hover:bg-muted/50">
-            <td className="p-4 align-middle font-mono text-xs text-foreground font-bold text-primary">{report.reportId}</td>
+            <td className="p-4 align-middle font-mono text-xs font-bold text-primary">{report.reportId}</td>
             <td className="p-4 align-middle">
                 <p className="text-sm font-medium text-foreground">{report.title}</p>
                 <p className="text-[11px] text-muted-foreground">{report.generatedByUser.fullName}</p>
@@ -218,12 +367,19 @@ function ReportTableRow({ report }: { report: Report }) {
             <td className="p-4 align-middle hidden lg:table-cell text-xs text-muted-foreground">{formatDate(report.generatedAt)}</td>
             <td className="p-4 align-middle">
                 <div className="flex gap-1">
-                    <button className="inline-flex items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                    <button
+                        onClick={handleView}
+                        disabled={report.status !== 'ready' || !report.fileUrl}
+                        title="View report"
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 ${report.status === 'ready' && report.fileUrl ? 'hover:bg-accent hover:text-accent-foreground' : 'opacity-40 cursor-not-allowed'}`}
+                    >
                         <Eye className="h-4 w-4" />
                     </button>
                     <button
-                        disabled={report.status !== 'ready'}
-                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 ${report.status === 'ready' ? 'hover:bg-accent hover:text-accent-foreground' : 'opacity-50 cursor-not-allowed'}`}
+                        onClick={handleDownload}
+                        disabled={report.status !== 'ready' || !report.fileUrl}
+                        title="Download report"
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 ${report.status === 'ready' && report.fileUrl ? 'hover:bg-accent hover:text-accent-foreground' : 'opacity-40 cursor-not-allowed'}`}
                     >
                         <Download className="h-4 w-4" />
                     </button>

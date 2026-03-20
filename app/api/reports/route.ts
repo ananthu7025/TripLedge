@@ -4,7 +4,7 @@ import { reports } from '@/db/schema';
 import { requireAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { generateReportId } from '@/lib/utils/generators';
-import { desc, eq } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 
 // GET /api/reports
 export async function GET() {
@@ -57,21 +57,11 @@ export async function POST(request: NextRequest) {
       dateRangeStart,
       dateRangeEnd,
       relatedId,
-      status: 'generating',
+      status: 'ready',
+      fileUrl: `/api/reports/${reportId}/download`,   // streams a real .xlsx file
       generatedBy: user.id,
+      generatedAt: new Date(),
     }).returning();
-
-    // In a real app, trigger background job to generate the report
-    // For now, mark as ready immediately
-    setTimeout(async () => {
-      await db.update(reports)
-        .set({
-          status: 'ready',
-          fileUrl: `/reports/${reportId}.xlsx`,
-          generatedAt: new Date(),
-        })
-        .where(eq(reports.id, newReport.id));
-    }, 2000);
 
     await logAudit({
       userId: user.id,
