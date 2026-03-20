@@ -45,25 +45,6 @@ export async function POST(
             return NextResponse.json({ error: 'Zone not found' }, { status: 404 });
         }
 
-        // Check if jobs already exist for this zone
-        if (zone.module === 'trip' || zone.module === 'both') {
-            const existingTrip = await db.query.tripInspections.findFirst({
-                where: eq(tripInspections.zoneId, id),
-            });
-            if (existingTrip) {
-                return NextResponse.json({ error: 'A trip inspection job already exists for this zone' }, { status: 400 });
-            }
-        }
-
-        if (zone.module === 'snow' || zone.module === 'both') {
-            const existingSnow = await db.query.snowRemovals.findFirst({
-                where: eq(snowRemovals.zoneId, id),
-            });
-            if (existingSnow) {
-                return NextResponse.json({ error: 'A snow removal job already exists for this zone' }, { status: 400 });
-            }
-        }
-
         const jobsCreated: { type: string; id: string; jobId: string }[] = [];
         const now = new Date();
 
