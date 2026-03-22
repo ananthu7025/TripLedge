@@ -23,7 +23,8 @@
       "Bash(unzip -p real-report.xlsx xl/drawings/drawing1.xml)",
       "Bash(curl -s http://localhost:3000/api/reports/RPT-009/download)",
       "Bash(open -a \"LibreOffice\" /tmp/local-test.xlsx)",
-      "Bash(open /tmp/local-test.xlsx)"
+      "Bash(open /tmp/local-test.xlsx)",
+      "Bash(ls -la /Users/ananthu/TripLedge/app/admin/\\\\\\(dashboard\\\\\\)/targets/)"
     ]
   }
 }
