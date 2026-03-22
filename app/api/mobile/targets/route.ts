@@ -10,23 +10,22 @@ export async function GET() {
   try {
     const user = await requireMobileAuth();
 
-    // Get all active targets assigned to this user
-    const assignments = await db.query.targetUsers.findMany({
-      where: eq(targetUsers.userId, user.id),
-      with: {
-        target: true,
-      },
+    // Get all active targets
+    const allActiveTargets = await db.query.targets.findMany({
+      where: eq(targets.status, 'active'),
     });
 
-    const activeAssignments = assignments.filter(
-      (a) => a.target.status === 'active'
-    );
+    // Get this user's specific allocations (if any)
+    const userAllocations = await db.query.targetUsers.findMany({
+      where: eq(targetUsers.userId, user.id),
+    });
+    const allocationMap = new Map(userAllocations.map((a) => [a.targetId, a.allocatedValue]));
 
     // For each target, calculate consumed value = sum of (highPoint + lowPoint + length)
     // across all completed jobs by this user matching the target's module
     const result = await Promise.all(
-      activeAssignments.map(async (assignment) => {
-        const { target } = assignment;
+      allActiveTargets.map(async (target) => {
+        const rawAllocated = allocationMap.get(target.id) ?? target.value;
         let consumedValue = 0;
 
         if (target.module === 'trip') {
@@ -69,7 +68,7 @@ export async function GET() {
           }, 0);
         }
 
-        const allocatedValue = parseFloat(assignment.allocatedValue);
+        const allocatedValue = parseFloat(rawAllocated);
         const remainingValue = Math.max(0, allocatedValue - consumedValue);
 
         return {
