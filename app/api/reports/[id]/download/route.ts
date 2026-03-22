@@ -36,44 +36,44 @@ async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; ext: 'jp
     }
 }
 
-type PhotoGroup = { before: string[]; after: string[] };
+type FetchedPhoto = { col: number; buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' };
 
-async function embedPhotos(
+// Fetch all photo URLs in parallel, returns map from url -> buffer+ext
+async function prefetchAll(urls: string[]): Promise<Map<string, { buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' }>> {
+    const results = await Promise.all(
+        urls.map(url => fetchImageBuffer(url).then(r => ({ url, r })))
+    );
+    const map = new Map<string, { buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' }>();
+    for (const { url, r } of results) {
+        if (r) map.set(url, r);
+    }
+    console.log(`[report-img] prefetched ${map.size}/${urls.length} images`);
+    return map;
+}
+
+function embedPhotos(
     ws: ExcelJS.Worksheet,
     wb: ExcelJS.Workbook,
-    rowIndex: number,          // 1-based ExcelJS row
-    beforeCol: number,         // 1-based column
-    afterCol: number,
-    photos: PhotoGroup,
+    rowIndex: number,
+    before: FetchedPhoto[],
+    after: FetchedPhoto[],
 ) {
-    const allUrls = [
-        ...photos.before.map(u => ({ url: u, col: beforeCol })),
-        ...photos.after.map(u => ({ url: u, col: afterCol })),
-    ];
+    const all = [...before, ...after];
+    if (all.length === 0) return;
 
-    if (allUrls.length === 0) return;
-
-    console.log(`[report-img] row ${rowIndex}: embedding ${allUrls.length} images`);
     ws.getRow(rowIndex).height = ROW_H;
-
-    // Track horizontal offset per column so multiple photos sit side by side
     const offsets: Record<number, number> = {};
 
-    for (const { url, col } of allUrls) {
-        const result = await fetchImageBuffer(url);
-        if (!result) continue;
-
+    for (const { col, buffer, ext } of all) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const imgId = wb.addImage({ buffer: result.buffer as any, extension: result.ext });
+        const imgId = wb.addImage({ buffer: buffer as any, extension: ext });
         const offset = offsets[col] ?? 0;
-
         ws.addImage(imgId, {
             tl: { col: col - 1 + offset * (IMG_W / 96), row: rowIndex - 1 },
             ext: { width: IMG_W, height: IMG_H },
             editAs: 'oneCell',
         });
-
-        offsets[col] = (offsets[col] ?? 0) + 1;
+        offsets[col] = offset + 1;
     }
 }
 
@@ -220,6 +220,10 @@ export async function GET(
             const beforeColIdx = ws.columns.findIndex(c => c.key === 'before') + 1;
             const afterColIdx  = ws.columns.findIndex(c => c.key === 'after') + 1;
 
+            // Fetch all photos in parallel before building rows
+            const allPhotoUrls = photos.map(p => buildPhotoUrl(p.photoUrl));
+            const imageCache = await prefetchAll(allPhotoUrls);
+
             for (let i = 0; i < rows.length; i++) {
                 const r = rows[i];
                 const rowNum = i + 2; // 1=header, data starts at 2
@@ -248,12 +252,16 @@ export async function GET(
                 const beforeUrls = rowPhotos.filter(p => p.photoType === 'before').map(p => buildPhotoUrl(p.photoUrl));
                 const afterUrls  = rowPhotos.filter(p => p.photoType === 'after').map(p => buildPhotoUrl(p.photoUrl));
 
-                if (beforeUrls.length > 0 || afterUrls.length > 0) {
-                    await embedPhotos(ws, wb, rowNum, beforeColIdx, afterColIdx, {
-                        before: beforeUrls,
-                        after: afterUrls,
-                    });
-                }
+                const beforeFetched = beforeUrls.map(url => {
+                    const f = imageCache.get(url);
+                    return f ? { col: beforeColIdx, ...f } : null;
+                }).filter(Boolean) as FetchedPhoto[];
+                const afterFetched = afterUrls.map(url => {
+                    const f = imageCache.get(url);
+                    return f ? { col: afterColIdx, ...f } : null;
+                }).filter(Boolean) as FetchedPhoto[];
+
+                embedPhotos(ws, wb, rowNum, beforeFetched, afterFetched);
 
                 // Zebra striping
                 if (i % 2 === 1) {
