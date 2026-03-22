@@ -16,8 +16,11 @@ const ROW_H = 70;  // row height in points when photos present
 
 async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' } | null> {
     try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!res.ok) return null;
+        const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+        if (!res.ok) {
+            console.error(`[report-img] fetch failed ${res.status} for ${url}`);
+            return null;
+        }
         const contentType = res.headers.get('content-type') ?? '';
         const ext: 'jpeg' | 'png' | 'gif' = contentType.includes('png')
             ? 'png'
@@ -25,8 +28,10 @@ async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; ext: 'jp
                 ? 'gif'
                 : 'jpeg';
         const buf = await res.arrayBuffer();
+        console.log(`[report-img] fetched ${ext} ${buf.byteLength}b from ${url}`);
         return { buffer: Buffer.from(buf), ext };
-    } catch {
+    } catch (err) {
+        console.error(`[report-img] fetch error for ${url}:`, err);
         return null;
     }
 }
@@ -48,6 +53,7 @@ async function embedPhotos(
 
     if (allUrls.length === 0) return;
 
+    console.log(`[report-img] row ${rowIndex}: embedding ${allUrls.length} images`);
     ws.getRow(rowIndex).height = ROW_H;
 
     // Track horizontal offset per column so multiple photos sit side by side
