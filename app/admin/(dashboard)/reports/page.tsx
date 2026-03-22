@@ -303,6 +303,8 @@ function TabButton({ label, count, active = false, onClick }: { label: string; c
 }
 
 function ReportTableRow({ report, onRefresh }: { report: Report; onRefresh: () => void }) {
+    const [downloading, setDownloading] = useState(false);
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'ready':      return 'bg-success/10 text-success border-success/20';
@@ -329,21 +331,32 @@ function ReportTableRow({ report, onRefresh }: { report: Report; onRefresh: () =
         ? `${formatDate(report.dateRangeStart)} – ${formatDate(report.dateRangeEnd)}`
         : report.dateRangeStart ? formatDate(report.dateRangeStart) : '—';
 
-    const handleDownload = () => {
-        if (!report.fileUrl) return;
+    const handleDownload = async () => {
+        if (!report.fileUrl || downloading) return;
         const url = report.fileUrl.startsWith('http')
             ? report.fileUrl
             : `${window.location.origin}${report.fileUrl}`;
-        window.open(url, '_blank');
+        setDownloading(true);
+        try {
+            const res = await fetch(url);
+            const embedded = res.headers.get('X-Images-Embedded');
+            console.log(`[report] X-Images-Embedded: ${embedded}`);
+            if (!res.ok) throw new Error(`Server error ${res.status}`);
+            const blob = await res.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${report.reportId}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        } catch (err) {
+            console.error('Download failed:', err);
+            alert('Download failed. Please try again.');
+        } finally {
+            setDownloading(false);
+        }
     };
 
-    const handleView = () => {
-        if (!report.fileUrl) return;
-        const url = report.fileUrl.startsWith('http')
-            ? report.fileUrl
-            : `${window.location.origin}${report.fileUrl}`;
-        window.open(url, '_blank');
-    };
+    const handleView = handleDownload;
 
     return (
         <tr className="border-b transition-colors hover:bg-muted/50">
@@ -377,11 +390,11 @@ function ReportTableRow({ report, onRefresh }: { report: Report; onRefresh: () =
                     </button>
                     <button
                         onClick={handleDownload}
-                        disabled={report.status !== 'ready' || !report.fileUrl}
+                        disabled={report.status !== 'ready' || !report.fileUrl || downloading}
                         title="Download report"
-                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 ${report.status === 'ready' && report.fileUrl ? 'hover:bg-accent hover:text-accent-foreground' : 'opacity-40 cursor-not-allowed'}`}
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 ${report.status === 'ready' && report.fileUrl && !downloading ? 'hover:bg-accent hover:text-accent-foreground' : 'opacity-40 cursor-not-allowed'}`}
                     >
-                        <Download className="h-4 w-4" />
+                        {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     </button>
                 </div>
             </td>

@@ -10,95 +10,27 @@ function fmt(d: Date | string | null | undefined): string {
     return new Date(d as string).toLocaleString('en-CA', { hour12: false });
 }
 
-const IMG_W = 120; // px width for embedded photos
-const IMG_H = 90;  // px height for embedded photos
-const ROW_H = 70;  // row height in points when photos present
+const IMG_W = 120;
+const IMG_H = 90;
+const ROW_H = 70;
 
-async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' } | null> {
+async function fetchBuf(url: string): Promise<Buffer | null> {
     try {
         const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-        if (!res.ok) {
-            console.error(`[report-img] fetch failed ${res.status} for ${url}`);
-            return null;
-        }
-        const contentType = res.headers.get('content-type') ?? '';
-        const ext: 'jpeg' | 'png' | 'gif' = contentType.includes('png')
-            ? 'png'
-            : contentType.includes('gif')
-                ? 'gif'
-                : 'jpeg';
-        const buf = await res.arrayBuffer();
-        console.log(`[report-img] fetched ${ext} ${buf.byteLength}b from ${url}`);
-        return { buffer: Buffer.from(buf), ext };
-    } catch (err) {
-        console.error(`[report-img] fetch error for ${url}:`, err);
+        if (!res.ok) return null;
+        return Buffer.from(await res.arrayBuffer());
+    } catch {
         return null;
     }
 }
 
-type FetchedPhoto = { col: number; buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' };
-
-// Fetch all photo URLs in parallel, returns map from url -> buffer+ext
-async function prefetchAll(urls: string[]): Promise<Map<string, { buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' }>> {
-    const results = await Promise.all(
-        urls.map(url => fetchImageBuffer(url).then(r => ({ url, r })))
-    );
-    const map = new Map<string, { buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' }>();
-    for (const { url, r } of results) {
-        if (r) map.set(url, r);
-    }
-    console.log(`[report-img] prefetched ${map.size}/${urls.length} images`);
-    return map;
-}
-
-function embedPhotos(
-    ws: ExcelJS.Worksheet,
-    wb: ExcelJS.Workbook,
-    rowIndex: number,
-    before: FetchedPhoto[],
-    after: FetchedPhoto[],
-) {
-    const all = [...before, ...after];
-    if (all.length === 0) return;
-
-    ws.getRow(rowIndex).height = ROW_H;
-    const offsets: Record<number, number> = {};
-
-    for (const { col, buffer, ext } of all) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const imgId = wb.addImage({ buffer: buffer as any, extension: ext });
-        const offset = offsets[col] ?? 0;
-        ws.addImage(imgId, {
-            tl: { col: col - 1 + offset * (IMG_W / 96), row: rowIndex - 1 },
-            ext: { width: IMG_W, height: IMG_H },
-            editAs: 'oneCell',
-        });
-        offsets[col] = offset + 1;
-    }
-}
-
-function styleHeader(ws: ExcelJS.Worksheet, colCount: number) {
-    const headerRow = ws.getRow(1);
-    headerRow.eachCell(cell => {
+function styleHeader(ws: ExcelJS.Worksheet) {
+    ws.getRow(1).eachCell(cell => {
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
         cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-        cell.border = {
-            bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-        };
     });
-    headerRow.height = 28;
-
-    // Auto-width for non-photo columns, wide for photo columns
-    for (let i = 1; i <= colCount; i++) {
-        const col = ws.getColumn(i);
-        const header = String(col.header ?? '');
-        if (header === 'Before Photos' || header === 'After Photos') {
-            col.width = 20;
-        } else {
-            col.width = Math.max(header.length + 4, 14);
-        }
-    }
+    ws.getRow(1).height = 28;
 }
 
 // GET /api/reports/:id/download
@@ -120,53 +52,33 @@ export async function GET(
 
         const dateFrom = report.dateRangeStart ? new Date(report.dateRangeStart) : null;
         const dateTo = report.dateRangeEnd ? new Date(`${report.dateRangeEnd}T23:59:59`) : null;
+        const buildPhotoUrl = (url: string) => url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_APP_URL ?? ''}${url}`;
 
         const wb = new ExcelJS.Workbook();
         wb.creator = 'TripLedge';
         const ws = wb.addWorksheet(report.title.slice(0, 31));
-
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-        const buildPhotoUrl = (url: string) => url.startsWith('http') ? url : `${baseUrl}${url}`;
 
         if (report.type === 'trip' || report.type === 'snow') {
             const isTrip = report.type === 'trip';
 
             const query = isTrip
                 ? db.select({
-                    id: tripInspections.id,
-                    jobId: tripInspections.tripId,
-                    zone: zones.name,
-                    zoneType: tripInspections.zoneType,
-                    status: tripInspections.status,
-                    streetName: tripInspections.streetName,
-                    avenueName: tripInspections.avenueName,
-                    highPoint: tripInspections.highPoint,
-                    lowPoint: tripInspections.lowPoint,
-                    length: tripInspections.length,
-                    capturedLat: tripInspections.capturedLatitude,
-                    capturedLng: tripInspections.capturedLongitude,
-                    notes: tripInspections.notes,
-                    inspectedAt: tripInspections.inspectedAt,
-                    completedAt: tripInspections.completedAt,
-                    createdAt: tripInspections.createdAt,
+                    id: tripInspections.id, jobId: tripInspections.tripId,
+                    zone: zones.name, zoneType: tripInspections.zoneType,
+                    status: tripInspections.status, streetName: tripInspections.streetName,
+                    avenueName: tripInspections.avenueName, highPoint: tripInspections.highPoint,
+                    lowPoint: tripInspections.lowPoint, length: tripInspections.length,
+                    notes: tripInspections.notes, inspectedAt: tripInspections.inspectedAt,
+                    completedAt: tripInspections.completedAt, createdAt: tripInspections.createdAt,
                 }).from(tripInspections).leftJoin(zones, eq(tripInspections.zoneId, zones.id))
                 : db.select({
-                    id: snowRemovals.id,
-                    jobId: snowRemovals.snowId,
-                    zone: zones.name,
-                    zoneType: snowRemovals.zoneType,
-                    status: snowRemovals.status,
-                    streetName: snowRemovals.streetName,
-                    avenueName: snowRemovals.avenueName,
-                    highPoint: snowRemovals.highPoint,
-                    lowPoint: snowRemovals.lowPoint,
-                    length: snowRemovals.length,
-                    capturedLat: snowRemovals.capturedLatitude,
-                    capturedLng: snowRemovals.capturedLongitude,
-                    notes: snowRemovals.notes,
-                    inspectedAt: snowRemovals.inspectedAt,
-                    completedAt: snowRemovals.completedAt,
-                    createdAt: snowRemovals.createdAt,
+                    id: snowRemovals.id, jobId: snowRemovals.snowId,
+                    zone: zones.name, zoneType: snowRemovals.zoneType,
+                    status: snowRemovals.status, streetName: snowRemovals.streetName,
+                    avenueName: snowRemovals.avenueName, highPoint: snowRemovals.highPoint,
+                    lowPoint: snowRemovals.lowPoint, length: snowRemovals.length,
+                    notes: snowRemovals.notes, inspectedAt: snowRemovals.inspectedAt,
+                    completedAt: snowRemovals.completedAt, createdAt: snowRemovals.createdAt,
                 }).from(snowRemovals).leftJoin(zones, eq(snowRemovals.zoneId, zones.id));
 
             const conditions = [];
@@ -182,116 +94,100 @@ export async function GET(
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const rows = conditions.length ? await (query as any).where(and(...conditions)) : await query;
-
             const jobIds = rows.map((r: { id: string }) => r.id);
-            const photos = jobIds.length
+
+            const photoRecords = jobIds.length
                 ? await db.query.jobPhotos.findMany({
-                    where: and(
-                        eq(jobPhotos.jobType, isTrip ? 'trip' : 'snow'),
-                        inArray(jobPhotos.jobId, jobIds),
-                    ),
+                    where: and(eq(jobPhotos.jobType, isTrip ? 'trip' : 'snow'), inArray(jobPhotos.jobId, jobIds)),
                 })
                 : [];
 
+            // Fetch all images in parallel
+            const allUrls = [...new Set(photoRecords.map(p => buildPhotoUrl(p.photoUrl)))];
+            const fetched = await Promise.all(allUrls.map(url => fetchBuf(url).then(buf => ({ url, buf }))));
+            const imgCache = new Map(fetched.filter(f => f.buf).map(f => [f.url, f.buf as Buffer]));
+
             const idLabel = isTrip ? 'Trip ID' : 'Snow ID';
-
             ws.columns = [
-                { header: idLabel,           key: 'jobId',      width: 12 },
-                { header: 'Zone',            key: 'zone',       width: 18 },
-                { header: 'Zone Type',       key: 'zoneType',   width: 12 },
-                { header: 'Status',          key: 'status',     width: 12 },
-                { header: 'Street Name',     key: 'street',     width: 18 },
-                { header: 'Avenue / Cross',  key: 'avenue',     width: 18 },
-                { header: 'High Point (cm)', key: 'high',       width: 14 },
-                { header: 'Low Point (cm)',  key: 'low',        width: 14 },
-                { header: 'Length (m)',      key: 'length',     width: 12 },
-                { header: 'Latitude',        key: 'lat',        width: 14 },
-                { header: 'Longitude',       key: 'lng',        width: 14 },
-                { header: 'Notes',           key: 'notes',      width: 24 },
-                { header: 'Before Photos',   key: 'before',     width: 20 },
-                { header: 'After Photos',    key: 'after',      width: 20 },
-                { header: 'Inspected At',    key: 'inspected',  width: 20 },
-                { header: 'Completed At',    key: 'completed',  width: 20 },
-                { header: 'Created At',      key: 'created',    width: 20 },
+                { header: idLabel,           key: 'jobId',     width: 12 },
+                { header: 'Zone',            key: 'zone',      width: 18 },
+                { header: 'Zone Type',       key: 'zoneType',  width: 12 },
+                { header: 'Status',          key: 'status',    width: 12 },
+                { header: 'Street Name',     key: 'street',    width: 18 },
+                { header: 'Avenue / Cross',  key: 'avenue',    width: 18 },
+                { header: 'High Point (cm)', key: 'high',      width: 14 },
+                { header: 'Low Point (cm)',  key: 'low',       width: 14 },
+                { header: 'Length (m)',      key: 'length',    width: 12 },
+                { header: 'Notes',           key: 'notes',     width: 24 },
+                { header: 'Before Photos',   key: 'before',    width: 20 },
+                { header: 'After Photos',    key: 'after',     width: 20 },
+                { header: 'Inspected At',    key: 'inspected', width: 20 },
+                { header: 'Completed At',    key: 'completed', width: 20 },
+                { header: 'Created At',      key: 'created',   width: 20 },
             ];
-
-            styleHeader(ws, ws.columns.length);
+            styleHeader(ws);
 
             const beforeColIdx = ws.columns.findIndex(c => c.key === 'before') + 1;
-            const afterColIdx  = ws.columns.findIndex(c => c.key === 'after') + 1;
-
-            // Fetch all photos in parallel before building rows
-            const allPhotoUrls = photos.map(p => buildPhotoUrl(p.photoUrl));
-            const imageCache = await prefetchAll(allPhotoUrls);
+            const afterColIdx  = ws.columns.findIndex(c => c.key === 'after')  + 1;
 
             for (let i = 0; i < rows.length; i++) {
                 const r = rows[i];
-                const rowNum = i + 2; // 1=header, data starts at 2
+                const rowNum = i + 2;
 
                 ws.addRow({
-                    jobId:     r.jobId,
-                    zone:      r.zone ?? '',
-                    zoneType:  r.zoneType,
-                    status:    r.status,
-                    street:    r.streetName ?? '',
-                    avenue:    r.avenueName ?? '',
-                    high:      r.highPoint ?? '',
-                    low:       r.lowPoint ?? '',
-                    length:    r.length ?? '',
-                    lat:       r.capturedLat ?? '',
-                    lng:       r.capturedLng ?? '',
-                    notes:     r.notes ?? '',
-                    before:    '',
-                    after:     '',
-                    inspected: fmt(r.inspectedAt),
-                    completed: fmt(r.completedAt),
-                    created:   fmt(r.createdAt),
+                    jobId: r.jobId, zone: r.zone ?? '', zoneType: r.zoneType,
+                    status: r.status, street: r.streetName ?? '', avenue: r.avenueName ?? '',
+                    high: r.highPoint ?? '', low: r.lowPoint ?? '', length: r.length ?? '',
+                    notes: r.notes ?? '', before: '', after: '',
+                    inspected: fmt(r.inspectedAt), completed: fmt(r.completedAt), created: fmt(r.createdAt),
                 });
 
-                const rowPhotos = photos.filter(p => p.jobId === r.id);
-                const beforeUrls = rowPhotos.filter(p => p.photoType === 'before').map(p => buildPhotoUrl(p.photoUrl));
-                const afterUrls  = rowPhotos.filter(p => p.photoType === 'after').map(p => buildPhotoUrl(p.photoUrl));
+                const rowPhotos = photoRecords.filter((p: { jobId: string }) => p.jobId === r.id);
+                const beforeBufs = rowPhotos
+                    .filter((p: { photoType: string }) => p.photoType === 'before')
+                    .map((p: { photoUrl: string }) => imgCache.get(buildPhotoUrl(p.photoUrl)))
+                    .filter(Boolean) as Buffer[];
+                const afterBufs = rowPhotos
+                    .filter((p: { photoType: string }) => p.photoType === 'after')
+                    .map((p: { photoUrl: string }) => imgCache.get(buildPhotoUrl(p.photoUrl)))
+                    .filter(Boolean) as Buffer[];
 
-                const beforeFetched = beforeUrls.map(url => {
-                    const f = imageCache.get(url);
-                    return f ? { col: beforeColIdx, ...f } : null;
-                }).filter(Boolean) as FetchedPhoto[];
-                const afterFetched = afterUrls.map(url => {
-                    const f = imageCache.get(url);
-                    return f ? { col: afterColIdx, ...f } : null;
-                }).filter(Boolean) as FetchedPhoto[];
+                if (beforeBufs.length > 0 || afterBufs.length > 0) {
+                    ws.getRow(rowNum).height = ROW_H;
+                    let offset = 0;
+                    for (const buf of beforeBufs) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const imgId = wb.addImage({ buffer: buf as any, extension: 'jpeg' });
+                        ws.addImage(imgId, { tl: { col: beforeColIdx - 1 + offset, row: rowNum - 1 }, ext: { width: IMG_W, height: IMG_H }, editAs: 'oneCell' });
+                        offset++;
+                    }
+                    offset = 0;
+                    for (const buf of afterBufs) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const imgId = wb.addImage({ buffer: buf as any, extension: 'jpeg' });
+                        ws.addImage(imgId, { tl: { col: afterColIdx - 1 + offset, row: rowNum - 1 }, ext: { width: IMG_W, height: IMG_H }, editAs: 'oneCell' });
+                        offset++;
+                    }
+                }
 
-                embedPhotos(ws, wb, rowNum, beforeFetched, afterFetched);
-
-                // Zebra striping
                 if (i % 2 === 1) {
                     ws.getRow(rowNum).eachCell(cell => {
-                        if (!cell.fill || (cell.fill as ExcelJS.FillPattern).fgColor?.argb === 'FF1E3A5F') return;
                         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F4FA' } };
                     });
                 }
             }
 
         } else if (report.type === 'attendance') {
-            const query = db
-                .select({
-                    date: attendance.date,
-                    fullName: users.fullName,
-                    email: users.email,
-                    checkIn: attendance.checkInTime,
-                    checkOut: attendance.checkOutTime,
-                    method: attendance.method,
-                    status: attendance.status,
-                    locationName: attendance.locationName,
-                    createdAt: attendance.createdAt,
-                })
-                .from(attendance)
-                .leftJoin(users, eq(attendance.userId, users.id));
+            const query = db.select({
+                date: attendance.date, fullName: users.fullName, email: users.email,
+                checkIn: attendance.checkInTime, checkOut: attendance.checkOutTime,
+                method: attendance.method, status: attendance.status,
+                locationName: attendance.locationName, createdAt: attendance.createdAt,
+            }).from(attendance).leftJoin(users, eq(attendance.userId, users.id));
 
             const conditions = [];
             if (dateFrom) conditions.push(gte(attendance.createdAt, dateFrom));
             if (dateTo)   conditions.push(lte(attendance.createdAt, dateTo));
-
             const rows = conditions.length ? await query.where(and(...conditions)) : await query;
 
             ws.columns = [
@@ -305,20 +201,14 @@ export async function GET(
                 { header: 'Location',   key: 'location', width: 22 },
                 { header: 'Created At', key: 'created',  width: 20 },
             ];
-
-            styleHeader(ws, ws.columns.length);
+            styleHeader(ws);
 
             rows.forEach((r, i) => {
                 ws.addRow({
-                    date:     r.date,
-                    name:     r.fullName ?? '',
-                    email:    r.email ?? '',
-                    checkIn:  r.checkIn ?? '',
-                    checkOut: r.checkOut ?? '',
-                    method:   r.method,
-                    status:   r.status,
-                    location: r.locationName ?? '',
-                    created:  fmt(r.createdAt),
+                    date: r.date, name: r.fullName ?? '', email: r.email ?? '',
+                    checkIn: r.checkIn ?? '', checkOut: r.checkOut ?? '',
+                    method: r.method, status: r.status, location: r.locationName ?? '',
+                    created: fmt(r.createdAt),
                 });
                 if (i % 2 === 1) {
                     ws.getRow(i + 2).eachCell(cell => {
@@ -329,19 +219,21 @@ export async function GET(
         }
 
         const buffer = await wb.xlsx.writeBuffer();
+        const imageCount = wb.model.media?.length ?? 0;
 
         return new NextResponse(buffer as unknown as ArrayBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition': `attachment; filename="${report.reportId}.xlsx"`,
+                'X-Images-Embedded': String(imageCount),
             },
         });
     } catch (error: any) {
         if (error.message === 'Unauthorized') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        console.error('Report download error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('Report download error:', error?.message ?? error);
+        return NextResponse.json({ error: error?.message ?? 'Internal server error' }, { status: 500 });
     }
 }

@@ -12,7 +12,18 @@
       "Bash(pod install:*)",
       "Bash(kill %1)",
       "Bash(source .env.local)",
-      "Bash(curl -sI \"https://elplcntipaavxsgh.public.blob.vercel-storage.com/uploads/b26f6523-cd7f-4135-ac56-95d826e47322.jpg\")"
+      "Bash(curl -sI \"https://elplcntipaavxsgh.public.blob.vercel-storage.com/uploads/b26f6523-cd7f-4135-ac56-95d826e47322.jpg\")",
+      "Bash(open /tmp/test-image.xlsx)",
+      "Bash(open -a \"Numbers\" /tmp/test-image.xlsx)",
+      "Bash(open -a \"Microsoft Excel\" /tmp/test-image.xlsx)",
+      "Bash(open -R /tmp/test-image.xlsx)",
+      "Read(//private/tmp/**)",
+      "Bash(unzip -l test-image.xlsx)",
+      "Bash(unzip -p test-image.xlsx xl/drawings/drawing1.xml)",
+      "Bash(unzip -p real-report.xlsx xl/drawings/drawing1.xml)",
+      "Bash(curl -s http://localhost:3000/api/reports/RPT-009/download)",
+      "Bash(open -a \"LibreOffice\" /tmp/local-test.xlsx)",
+      "Bash(open /tmp/local-test.xlsx)"
     ]
   }
 }
