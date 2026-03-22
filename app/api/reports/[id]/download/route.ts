@@ -14,7 +14,7 @@ const IMG_W = 120; // px width for embedded photos
 const IMG_H = 90;  // px height for embedded photos
 const ROW_H = 70;  // row height in points when photos present
 
-async function fetchImageBuffer(url: string): Promise<{ buffer: ArrayBuffer; ext: 'jpeg' | 'png' | 'gif' } | null> {
+async function fetchImageBuffer(url: string): Promise<{ buffer: Buffer; ext: 'jpeg' | 'png' | 'gif' } | null> {
     try {
         const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
         if (!res.ok) return null;
@@ -25,7 +25,7 @@ async function fetchImageBuffer(url: string): Promise<{ buffer: ArrayBuffer; ext
                 ? 'gif'
                 : 'jpeg';
         const buf = await res.arrayBuffer();
-        return { buffer: buf, ext };
+        return { buffer: Buffer.from(buf), ext };
     } catch {
         return null;
     }
@@ -57,7 +57,8 @@ async function embedPhotos(
         const result = await fetchImageBuffer(url);
         if (!result) continue;
 
-        const imgId = wb.addImage({ buffer: result.buffer, extension: result.ext });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const imgId = wb.addImage({ buffer: result.buffer as any, extension: result.ext });
         const offset = offsets[col] ?? 0;
 
         ws.addImage(imgId, {

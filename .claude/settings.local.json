@@ -9,7 +9,10 @@
       "Bash(npm run db:seed:*)",
       "Bash(dir:*)",
       "Bash(npx tsc:*)",
-      "Bash(pod install:*)"
+      "Bash(pod install:*)",
+      "Bash(kill %1)",
+      "Bash(source .env.local)",
+      "Bash(curl -sI \"https://elplcntipaavxsgh.public.blob.vercel-storage.com/uploads/b26f6523-cd7f-4135-ac56-95d826e47322.jpg\")"
     ]
   }
 }
