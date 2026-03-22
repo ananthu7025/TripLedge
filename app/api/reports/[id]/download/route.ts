@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { db } from '@/db';
-import { reports, tripInspections, snowRemovals, attendance, users, zones } from '@/db/schema';
+import { reports, tripInspections, snowRemovals, attendance, users, zones, jobPhotos } from '@/db/schema';
 import { requireAuth } from '@/lib/utils/session';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, inArray } from 'drizzle-orm';
 
 function fmt(d: Date | string | null | undefined): string {
     if (!d) return '';
@@ -32,9 +32,15 @@ export async function GET(
 
         let sheetData: Record<string, unknown>[] = [];
 
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+
+        const buildPhotoUrl = (url: string) =>
+            url.startsWith('http') ? url : `${baseUrl}${url}`;
+
         if (report.type === 'trip') {
             const query = db
                 .select({
+                    id: tripInspections.id,
                     tripId: tripInspections.tripId,
                     zone: zones.name,
                     zoneType: tripInspections.zoneType,
@@ -61,27 +67,42 @@ export async function GET(
 
             const rows = conditions.length ? await query.where(and(...conditions)) : await query;
 
-            sheetData = rows.map(r => ({
-                'Trip ID':          r.tripId,
-                'Zone':             r.zone ?? '',
-                'Zone Type':        r.zoneType,
-                'Status':           r.status,
-                'Street Name':      r.streetName ?? '',
-                'Avenue / Cross':   r.avenueName ?? '',
-                'High Point (cm)':  r.highPoint ?? '',
-                'Low Point (cm)':   r.lowPoint ?? '',
-                'Length (m)':       r.length ?? '',
-                'Latitude':         r.capturedLat ?? '',
-                'Longitude':        r.capturedLng ?? '',
-                'Notes':            r.notes ?? '',
-                'Inspected At':     fmt(r.inspectedAt),
-                'Completed At':     fmt(r.completedAt),
-                'Created At':       fmt(r.createdAt),
-            }));
+            // Fetch all photos for these trips in one query
+            const tripIds = rows.map(r => r.id);
+            const photos = tripIds.length
+                ? await db.query.jobPhotos.findMany({
+                    where: and(eq(jobPhotos.jobType, 'trip'), inArray(jobPhotos.jobId, tripIds)),
+                })
+                : [];
+
+            sheetData = rows.map(r => {
+                const before = photos.filter(p => p.jobId === r.id && p.photoType === 'before').map(p => buildPhotoUrl(p.photoUrl));
+                const after  = photos.filter(p => p.jobId === r.id && p.photoType === 'after').map(p => buildPhotoUrl(p.photoUrl));
+                return {
+                    'Trip ID':           r.tripId,
+                    'Zone':              r.zone ?? '',
+                    'Zone Type':         r.zoneType,
+                    'Status':            r.status,
+                    'Street Name':       r.streetName ?? '',
+                    'Avenue / Cross':    r.avenueName ?? '',
+                    'High Point (cm)':   r.highPoint ?? '',
+                    'Low Point (cm)':    r.lowPoint ?? '',
+                    'Length (m)':        r.length ?? '',
+                    'Latitude':          r.capturedLat ?? '',
+                    'Longitude':         r.capturedLng ?? '',
+                    'Notes':             r.notes ?? '',
+                    'Before Photos':     before.join(', '),
+                    'After Photos':      after.join(', '),
+                    'Inspected At':      fmt(r.inspectedAt),
+                    'Completed At':      fmt(r.completedAt),
+                    'Created At':        fmt(r.createdAt),
+                };
+            });
 
         } else if (report.type === 'snow') {
             const query = db
                 .select({
+                    id: snowRemovals.id,
                     snowId: snowRemovals.snowId,
                     zone: zones.name,
                     zoneType: snowRemovals.zoneType,
@@ -108,23 +129,37 @@ export async function GET(
 
             const rows = conditions.length ? await query.where(and(...conditions)) : await query;
 
-            sheetData = rows.map(r => ({
-                'Snow ID':          r.snowId,
-                'Zone':             r.zone ?? '',
-                'Zone Type':        r.zoneType,
-                'Status':           r.status,
-                'Street Name':      r.streetName ?? '',
-                'Avenue / Cross':   r.avenueName ?? '',
-                'High Point (cm)':  r.highPoint ?? '',
-                'Low Point (cm)':   r.lowPoint ?? '',
-                'Length (m)':       r.length ?? '',
-                'Latitude':         r.capturedLat ?? '',
-                'Longitude':        r.capturedLng ?? '',
-                'Notes':            r.notes ?? '',
-                'Inspected At':     fmt(r.inspectedAt),
-                'Completed At':     fmt(r.completedAt),
-                'Created At':       fmt(r.createdAt),
-            }));
+            // Fetch all photos for these snow jobs in one query
+            const snowIds = rows.map(r => r.id);
+            const photos = snowIds.length
+                ? await db.query.jobPhotos.findMany({
+                    where: and(eq(jobPhotos.jobType, 'snow'), inArray(jobPhotos.jobId, snowIds)),
+                })
+                : [];
+
+            sheetData = rows.map(r => {
+                const before = photos.filter(p => p.jobId === r.id && p.photoType === 'before').map(p => buildPhotoUrl(p.photoUrl));
+                const after  = photos.filter(p => p.jobId === r.id && p.photoType === 'after').map(p => buildPhotoUrl(p.photoUrl));
+                return {
+                    'Snow ID':           r.snowId,
+                    'Zone':              r.zone ?? '',
+                    'Zone Type':         r.zoneType,
+                    'Status':            r.status,
+                    'Street Name':       r.streetName ?? '',
+                    'Avenue / Cross':    r.avenueName ?? '',
+                    'High Point (cm)':   r.highPoint ?? '',
+                    'Low Point (cm)':    r.lowPoint ?? '',
+                    'Length (m)':        r.length ?? '',
+                    'Latitude':          r.capturedLat ?? '',
+                    'Longitude':         r.capturedLng ?? '',
+                    'Notes':             r.notes ?? '',
+                    'Before Photos':     before.join(', '),
+                    'After Photos':      after.join(', '),
+                    'Inspected At':      fmt(r.inspectedAt),
+                    'Completed At':      fmt(r.completedAt),
+                    'Created At':        fmt(r.createdAt),
+                };
+            });
 
         } else if (report.type === 'attendance') {
             const query = db
