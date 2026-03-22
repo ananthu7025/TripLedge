@@ -60,3 +60,72 @@ export async function GET(
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        await requireMobileAuth();
+        const { id } = await params;
+
+        const trip = await db.query.tripInspections.findFirst({
+            where: eq(tripInspections.id, id),
+        });
+        if (!trip) {
+            return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+        }
+
+        const body = await request.json();
+        const { street_name, avenue_name, high_point, low_point, length, notes } = body;
+
+        await db.update(tripInspections)
+            .set({
+                ...(street_name !== undefined && { streetName: street_name }),
+                ...(avenue_name !== undefined && { avenueName: avenue_name }),
+                ...(high_point !== undefined && { highPoint: String(high_point) }),
+                ...(low_point !== undefined && { lowPoint: String(low_point) }),
+                ...(length !== undefined && { length: String(length) }),
+                ...(notes !== undefined && { notes }),
+                updatedAt: new Date(),
+            })
+            .where(eq(tripInspections.id, id));
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        await requireMobileAuth();
+        const { id } = await params;
+
+        const trip = await db.query.tripInspections.findFirst({
+            where: eq(tripInspections.id, id),
+        });
+        if (!trip) {
+            return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+        }
+
+        // Delete associated photos first, then the job
+        await db.delete(jobPhotos).where(
+            and(eq(jobPhotos.jobType, 'trip'), eq(jobPhotos.jobId, id))
+        );
+        await db.delete(tripInspections).where(eq(tripInspections.id, id));
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        if (error.message === 'Unauthorized') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}

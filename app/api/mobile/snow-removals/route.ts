@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { snowRemovals } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
@@ -11,7 +11,8 @@ export async function GET() {
         const snows = await db.query.snowRemovals.findMany({
             where: or(
                 eq(snowRemovals.status, 'pending'),
-                eq(snowRemovals.status, 'inspected')
+                eq(snowRemovals.status, 'inspected'),
+                eq(snowRemovals.status, 'completed')
             ),
             orderBy: [desc(snowRemovals.createdAt)],
             with: {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tripInspections } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
@@ -11,7 +11,8 @@ export async function GET() {
         const trips = await db.query.tripInspections.findMany({
             where: or(
                 eq(tripInspections.status, 'pending'),
-                eq(tripInspections.status, 'inspected')
+                eq(tripInspections.status, 'inspected'),
+                eq(tripInspections.status, 'completed')
             ),
             orderBy: [desc(tripInspections.createdAt)],
             with: {

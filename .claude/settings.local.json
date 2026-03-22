@@ -8,7 +8,8 @@
       "Bash(timeout:*)",
       "Bash(npm run db:seed:*)",
       "Bash(dir:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(pod install:*)"
     ]
   }
 }
