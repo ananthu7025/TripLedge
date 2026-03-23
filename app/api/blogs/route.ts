@@ -7,8 +7,6 @@ import { logAudit } from '@/lib/utils/audit';
 
 export async function GET() {
   try {
-    await requireAuth();
-
     const allBlogs = await db.query.blogs.findMany({
       orderBy: [desc(blogs.createdAt)],
       with: {
