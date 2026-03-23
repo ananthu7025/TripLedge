@@ -17,6 +17,7 @@ export const ROUTES = {
   USERS: "/admin/users",
   SETTINGS: "/admin/settings",
   AUDIT_LOG: "/admin/audit-log",
+  CHECKIN: "/checkin",
 } as const;
 
 // API endpoints
@@ -36,6 +37,10 @@ export const API_ENDPOINTS = {
   USERS: "/api/users",
   SETTINGS: "/api/settings",
   AUDIT_LOGS: "/api/audit-logs",
+  CHECKIN: {
+    VERIFY_LOCATION: "/api/checkin/verify-location",
+    REQUEST_STATUS: (id: string) => `/api/checkin/request-status/${id}`,
+  },
 } as const;
 
 // Status options

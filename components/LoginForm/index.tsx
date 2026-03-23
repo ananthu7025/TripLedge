@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { InputText } from "@/components/ui/InputText";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@/app/utils/hooks/useApi";
+import { useApi } from "@/app/utils/hooks/useApi";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ROUTES, DEMO_CREDENTIALS, API_ENDPOINTS } from "@/app/utils/constants";
@@ -23,7 +23,7 @@ export function LoginForm() {
 
   const redirectPath = searchParams.get("redirect") || ROUTES.DASHBOARD;
 
-  const { mutate, isLoading, error, setError } = useMutation();
+  const { execute, isLoading, error, setError } = useApi<{ success: boolean; user: { roleName: string } }>();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -34,11 +34,10 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const success = await mutate(() =>
-      api.post(API_ENDPOINTS.AUTH.LOGIN, data),
-    );
-    if (success) {
-      router.push(redirectPath);
+    const result = await execute(() => api.post(API_ENDPOINTS.AUTH.LOGIN, data));
+    if (result) {
+      const destination = result.user?.roleName === 'admin' ? redirectPath : ROUTES.CHECKIN;
+      router.push(destination);
       router.refresh();
     }
   };

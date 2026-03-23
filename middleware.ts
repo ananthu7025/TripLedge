@@ -22,6 +22,12 @@ export function middleware(request: NextRequest) {
 
   // Protected admin routes
   const isProtectedRoute = pathname.startsWith('/admin') && !isLoginPage;
+  const isCheckInPage = pathname === '/checkin';
+
+  // If user is not authenticated and tries to access check-in page, redirect to login
+  if (!isAuthenticated && isCheckInPage) {
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
 
   // If user is authenticated and tries to access login page, redirect to dashboard
   if (isAuthenticated && isLoginPage) {
@@ -43,6 +49,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/checkin',
     '/',
   ],
 };
