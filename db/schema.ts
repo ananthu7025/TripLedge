@@ -206,6 +206,20 @@ export const reports = pgTable('reports', {
 });
 
 // ─────────────────────────────
+// BLOGS
+// ─────────────────────────────
+
+export const blogs = pgTable('blogs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: varchar('title', { length: 200 }).notNull(),
+  content: text('content').notNull(),
+  imageUrl: varchar('image_url', { length: 255 }),
+  authorId: uuid('author_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ─────────────────────────────
 // SYSTEM
 // ─────────────────────────────
 
@@ -349,6 +363,13 @@ export const reportsRelations = relations(reports, ({ one }) => ({
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(users, {
     fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+export const blogsRelations = relations(blogs, ({ one }) => ({
+  author: one(users, {
+    fields: [blogs.authorId],
     references: [users.id],
   }),
 }));

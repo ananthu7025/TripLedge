@@ -18,7 +18,8 @@ import {
   Users,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  BookOpen,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { name: "Check-In Requests", href: "/admin/check-in-requests", icon: UserCheck, badge: 2 },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Targets", href: "/admin/targets", icon: Target },
+  { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarDays },
   { name: "Audit Log", href: "/admin/audit-log", icon: ScrollText },
   { name: "Users", href: "/admin/users", icon: Users },
