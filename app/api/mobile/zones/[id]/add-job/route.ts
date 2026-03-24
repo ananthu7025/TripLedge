@@ -88,14 +88,16 @@ export async function POST(
             jobsCreated.push({ type: 'trip', id: trip.id, jobId: trip.tripId });
         }
 
-        // Create snow removal job if applicable — created as 'pending', technician starts it separately
+        // Create snow removal job — created as 'inspected' (before photos + problem collected at add time)
         if (zone.module === 'snow' || zone.module === 'both') {
             const snowId = await generateSnowId();
             const [snow] = await db.insert(snowRemovals).values({
                 snowId,
                 zoneId: zone.id,
                 zoneType: zone.zoneType,
-                status: 'pending',
+                status: 'inspected',
+                inspectedBy: user.id,
+                inspectedAt: now,
                 streetName: street_name.trim(),
                 capturedLatitude: captured_latitude != null ? String(captured_latitude) : null,
                 capturedLongitude: captured_longitude != null ? String(captured_longitude) : null,
