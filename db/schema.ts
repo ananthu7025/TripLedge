@@ -83,8 +83,8 @@ export const snowRemovals = pgTable('snow_removals', {
   id: uuid('id').primaryKey().defaultRandom(),
   snowId: varchar('snow_id', { length: 20 }).unique().notNull(), // S-001, S-002...
   zoneId: uuid('zone_id').references(() => zones.id).notNull(),
-  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician marks as inspected
-  completedBy: uuid('completed_by').references(() => users.id), // filled when technician marks as completed
+  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician starts job
+  completedBy: uuid('completed_by').references(() => users.id), // filled when technician completes job
   streetName: varchar('street_name', { length: 100 }),
   avenueName: varchar('avenue_name', { length: 100 }),
   zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
@@ -94,9 +94,12 @@ export const snowRemovals = pgTable('snow_removals', {
   highPoint: decimal('high_point', { precision: 10, scale: 2 }),
   lowPoint: decimal('low_point', { precision: 10, scale: 2 }),
   length: decimal('length', { precision: 10, scale: 2 }),
+  problemDescription: text('problem_description'),   // what problem is the site having
+  toolsUsed: text('tools_used'),                     // what tools were used (filled at complete)
+  solutionDescription: text('solution_description'), // how the problem was solved (filled at complete)
   notes: text('notes'),
-  inspectedAt: timestamp('inspected_at'),
-  completedAt: timestamp('completed_at'),
+  inspectedAt: timestamp('inspected_at'),   // = job start time
+  completedAt: timestamp('completed_at'),   // = job end time
   createdBy: uuid('created_by').references(() => users.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

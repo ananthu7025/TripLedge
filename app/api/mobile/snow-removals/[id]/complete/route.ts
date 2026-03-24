@@ -12,10 +12,18 @@ export async function POST(
     try {
         const user = await requireMobileAuth();
         const { id } = await params;
-        const { after_photos, notes } = await request.json();
+        const { after_photos, tools_used, solution_description } = await request.json();
 
         if (!after_photos || !Array.isArray(after_photos) || after_photos.length === 0) {
             return NextResponse.json({ error: 'after_photos must be a non-empty array' }, { status: 400 });
+        }
+
+        if (!tools_used || typeof tools_used !== 'string' || tools_used.trim() === '') {
+            return NextResponse.json({ error: 'tools_used is required' }, { status: 400 });
+        }
+
+        if (!solution_description || typeof solution_description !== 'string' || solution_description.trim() === '') {
+            return NextResponse.json({ error: 'solution_description is required' }, { status: 400 });
         }
 
         const snow = await db.query.snowRemovals.findFirst({
@@ -35,7 +43,8 @@ export async function POST(
                 status: 'completed',
                 completedBy: user.id,
                 completedAt: new Date(),
-                notes: notes ?? null,
+                toolsUsed: tools_used.trim(),
+                solutionDescription: solution_description.trim(),
                 updatedAt: new Date(),
             })
             .where(eq(snowRemovals.id, id));

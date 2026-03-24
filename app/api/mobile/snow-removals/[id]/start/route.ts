@@ -16,10 +16,7 @@ export async function PATCH(
 
         const {
             street_name,
-            avenue_name,
-            high_point,
-            low_point,
-            length,
+            problem_description,
             captured_latitude,
             captured_longitude,
             before_photos,
@@ -27,6 +24,10 @@ export async function PATCH(
 
         if (!street_name || typeof street_name !== 'string' || street_name.trim() === '') {
             return NextResponse.json({ error: 'street_name is required' }, { status: 400 });
+        }
+
+        if (!problem_description || typeof problem_description !== 'string' || problem_description.trim() === '') {
+            return NextResponse.json({ error: 'problem_description is required' }, { status: 400 });
         }
 
         if (!before_photos || !Array.isArray(before_photos) || before_photos.length === 0) {
@@ -51,25 +52,25 @@ export async function PATCH(
                 inspectedBy: user.id,
                 inspectedAt: new Date(),
                 streetName: street_name.trim(),
-                avenueName: avenue_name ? String(avenue_name).trim() : null,
-                highPoint: high_point != null ? String(high_point) : null,
-                lowPoint: low_point != null ? String(low_point) : null,
-                length: length != null ? String(length) : null,
+                problemDescription: problem_description.trim(),
                 capturedLatitude: captured_latitude != null ? String(captured_latitude) : null,
                 capturedLongitude: captured_longitude != null ? String(captured_longitude) : null,
                 updatedAt: new Date(),
             })
             .where(eq(snowRemovals.id, id));
 
-        await db.insert(jobPhotos).values(
-            before_photos.map((url: string) => ({
-                jobType: 'snow',
-                jobId: id,
-                photoType: 'before',
-                photoUrl: url,
-                uploadedBy: user.id,
-            }))
-        );
+        // Save before photos (may already exist from job creation — insert any new ones)
+        if (before_photos.length > 0) {
+            await db.insert(jobPhotos).values(
+                before_photos.map((url: string) => ({
+                    jobType: 'snow',
+                    jobId: id,
+                    photoType: 'before',
+                    photoUrl: url,
+                    uploadedBy: user.id,
+                }))
+            );
+        }
 
         await logAudit({
             userId: user.id,

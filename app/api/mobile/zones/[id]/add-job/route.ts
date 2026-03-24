@@ -26,6 +26,7 @@ export async function POST(
             captured_latitude,
             captured_longitude,
             before_photos,
+            problem_description,
         } = body;
 
         if (!street_name || typeof street_name !== 'string' || street_name.trim() === '') {
@@ -43,6 +44,12 @@ export async function POST(
 
         if (!zone) {
             return NextResponse.json({ error: 'Zone not found' }, { status: 404 });
+        }
+
+        // Snow jobs require a problem description
+        if ((zone.module === 'snow' || zone.module === 'both') &&
+            (!problem_description || typeof problem_description !== 'string' || problem_description.trim() === '')) {
+            return NextResponse.json({ error: 'problem_description is required for snow jobs' }, { status: 400 });
         }
 
         const jobsCreated: { type: string; id: string; jobId: string }[] = [];
@@ -81,23 +88,18 @@ export async function POST(
             jobsCreated.push({ type: 'trip', id: trip.id, jobId: trip.tripId });
         }
 
-        // Create snow removal job if applicable
+        // Create snow removal job if applicable — created as 'pending', technician starts it separately
         if (zone.module === 'snow' || zone.module === 'both') {
             const snowId = await generateSnowId();
             const [snow] = await db.insert(snowRemovals).values({
                 snowId,
                 zoneId: zone.id,
                 zoneType: zone.zoneType,
-                status: 'inspected',
-                inspectedBy: user.id,
-                inspectedAt: now,
+                status: 'pending',
                 streetName: street_name.trim(),
-                avenueName: avenue_name ? String(avenue_name).trim() : null,
-                highPoint: high_point != null ? String(high_point) : null,
-                lowPoint: low_point != null ? String(low_point) : null,
-                length: length != null ? String(length) : null,
                 capturedLatitude: captured_latitude != null ? String(captured_latitude) : null,
                 capturedLongitude: captured_longitude != null ? String(captured_longitude) : null,
+                problemDescription: problem_description.trim(),
                 createdBy: user.id,
             }).returning();
 

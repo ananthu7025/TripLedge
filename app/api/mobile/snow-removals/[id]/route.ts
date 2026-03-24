@@ -5,7 +5,7 @@ import { requireMobileAuth } from '@/lib/utils/session';
 import { eq, and } from 'drizzle-orm';
 
 export async function GET(
-    request: NextRequest,
+    _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
@@ -41,7 +41,6 @@ export async function GET(
             // pointsGeojson could not be parsed — startPoint stays null
         }
 
-        // Fetch before and after photos from jobPhotos table
         const photos = await db.query.jobPhotos.findMany({
             where: and(
                 eq(jobPhotos.jobType, 'snow'),
@@ -77,15 +76,14 @@ export async function PATCH(
         }
 
         const body = await request.json();
-        const { street_name, avenue_name, high_point, low_point, length, notes } = body;
+        const { street_name, problem_description, tools_used, solution_description, notes } = body;
 
         await db.update(snowRemovals)
             .set({
                 ...(street_name !== undefined && { streetName: street_name }),
-                ...(avenue_name !== undefined && { avenueName: avenue_name }),
-                ...(high_point !== undefined && { highPoint: String(high_point) }),
-                ...(low_point !== undefined && { lowPoint: String(low_point) }),
-                ...(length !== undefined && { length: String(length) }),
+                ...(problem_description !== undefined && { problemDescription: problem_description }),
+                ...(tools_used !== undefined && { toolsUsed: tools_used }),
+                ...(solution_description !== undefined && { solutionDescription: solution_description }),
                 ...(notes !== undefined && { notes }),
                 updatedAt: new Date(),
             })
@@ -101,7 +99,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-    request: NextRequest,
+    _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
@@ -115,7 +113,6 @@ export async function DELETE(
             return NextResponse.json({ error: 'Snow removal job not found' }, { status: 404 });
         }
 
-        // Delete associated photos first, then the job
         await db.delete(jobPhotos).where(
             and(eq(jobPhotos.jobType, 'snow'), eq(jobPhotos.jobId, id))
         );

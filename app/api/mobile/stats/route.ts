@@ -47,13 +47,15 @@ export async function GET() {
         .then((r) => r[0]?.count ?? 0),
 
       // All completed snow jobs by this user (for total removed sum)
-      db.query.snowRemovals.findMany({
-        where: and(
-          eq(snowRemovals.completedBy, user.id),
-          eq(snowRemovals.status, 'completed')
+      db
+        .select({ highPoint: snowRemovals.highPoint, lowPoint: snowRemovals.lowPoint, length: snowRemovals.length })
+        .from(snowRemovals)
+        .where(
+          and(
+            eq(snowRemovals.completedBy, user.id),
+            eq(snowRemovals.status, 'completed')
+          )
         ),
-        columns: { highPoint: true, lowPoint: true, length: true },
-      }),
 
       // Trip inspections created today by this user
       db
