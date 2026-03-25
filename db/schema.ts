@@ -253,6 +253,22 @@ export const companySettings = pgTable('company_settings', {
 });
 
 // ─────────────────────────────
+// CONTACT REQUESTS
+// ─────────────────────────────
+
+export const contactRequests = pgTable('contact_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  firstName: varchar('first_name', { length: 100 }).notNull(),
+  lastName: varchar('last_name', { length: 100 }).notNull(),
+  email: varchar('email', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(),
+  propertyType: varchar('property_type', { length: 50 }).notNull(),
+  serviceNeeded: varchar('service_needed', { length: 100 }).notNull(),
+  message: text('message'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─────────────────────────────
 // RELATIONS
 // ─────────────────────────────
 
@@ -376,3 +392,5 @@ export const blogsRelations = relations(blogs, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const contactRequestsRelations = relations(contactRequests, ({ one }) => ({}));
