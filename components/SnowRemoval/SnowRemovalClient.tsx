@@ -39,8 +39,7 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
             filtered = filtered.filter(s =>
                 s.snowId.toLowerCase().includes(query) ||
                 s.streetName?.toLowerCase().includes(query) ||
-                s.avenueName?.toLowerCase().includes(query) ||
-                s.zone.name.toLowerCase().includes(query)
+                s.houseNo?.toLowerCase().includes(query)
             );
         }
 
@@ -60,15 +59,6 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
         { label: "Inspected", value: "inspected", count: counts.inspected },
         { label: "Completed", value: "completed", count: counts.completed },
     ];
-
-    const getStatusVariant = (status: string): 'warning' | 'default' | 'success' | 'outline' | 'secondary' => {
-        switch (status) {
-            case 'pending': return 'warning';
-            case 'inspected': return 'secondary';
-            case 'completed': return 'success';
-            default: return 'outline';
-        }
-    };
 
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '—';
@@ -91,10 +81,10 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                     <InputText
                         variant="pill"
                         icon={Search}
-                        placeholder="Search street, avenue, ID…"
+                        placeholder="Search street, house no, ID…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-slate-100" // Simplified since component handles pill/height/bg
+                        className="bg-slate-100"
                     />
                 </div>
             </div>
@@ -105,8 +95,6 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                         <TableRow className="hover:bg-transparent border-b">
                             <TableHead className="w-24 px-6 h-14 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Snow ID</TableHead>
                             <TableHead className="px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Location</TableHead>
-                            <TableHead className="hidden md:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider text-center">Zone</TableHead>
-                            <TableHead className="hidden md:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Classification</TableHead>
                             <TableHead className="px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider text-center">Status</TableHead>
                             <TableHead className="hidden lg:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Created</TableHead>
                             <TableHead className="hidden lg:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Completed</TableHead>
@@ -116,7 +104,7 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                     <TableBody>
                         {filteredRemovals.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="h-64 text-center text-slate-400">
+                                <TableCell colSpan={6} className="h-64 text-center text-slate-400">
                                     No snow removal operations found
                                 </TableCell>
                             </TableRow>
@@ -129,18 +117,8 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                                     <TableCell className="px-6 py-5">
                                         <div className="space-y-0.5">
                                             <p className="text-sm font-bold text-slate-900">{removal.streetName || 'N/A'}</p>
-                                            <p className="text-[11px] font-medium text-slate-400">{removal.avenueName || 'N/A'}</p>
+                                            <p className="text-[11px] font-medium text-slate-400">{removal.houseNo || 'N/A'}</p>
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell px-6 py-5">
-                                        <div className="flex justify-center">
-                                            <Badge variant="outline" className="font-bold text-[10px] px-4 py-1 rounded-full border-slate-200 bg-white text-slate-500">
-                                                {removal.zone.name}
-                                            </Badge>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell px-6 py-5 text-sm font-medium text-slate-700 capitalize">
-                                        {removal.zoneType}
                                     </TableCell>
                                     <TableCell className="px-6 py-5">
                                         <div className="flex justify-center">

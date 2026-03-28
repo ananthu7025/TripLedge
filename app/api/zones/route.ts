@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { zones, tripInspections, snowRemovals } from '@/db/schema';
+import { zones, tripInspections } from '@/db/schema';
 import { requireAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { eq, desc } from 'drizzle-orm';
@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
     const user = await requireAuth();
 
     const body = await request.json();
-    const { name, zoneType, module, priority, points } = body;
+    const { name, zoneType, points } = body;
 
-    if (!name || !zoneType || !module || !priority || !points) {
+    if (!name || !zoneType || !points) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -51,8 +51,6 @@ export async function POST(request: NextRequest) {
     const [newZone] = await db.insert(zones).values({
       name,
       zoneType,
-      module,
-      priority,
       pointsGeojson: JSON.stringify(points),
       totalPoints: points.length,
       createdBy: user.id,
@@ -64,7 +62,7 @@ export async function POST(request: NextRequest) {
       module: 'zones',
       entityType: 'zone',
       entityId: newZone.id,
-      metadata: { zoneName: name, module },
+      metadata: { zoneName: name },
     });
 
     return NextResponse.json({
@@ -94,9 +92,6 @@ export async function DELETE(request: NextRequest) {
     // Delete related records first to avoid foreign key constraint errors
     // Delete all trip inspections for this zone
     await db.delete(tripInspections).where(eq(tripInspections.zoneId, id));
-
-    // Delete all snow removals for this zone
-    await db.delete(snowRemovals).where(eq(snowRemovals.zoneId, id));
 
     // Now delete the zone itself
     await db.delete(zones).where(eq(zones.id, id));

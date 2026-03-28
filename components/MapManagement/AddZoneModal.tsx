@@ -26,26 +26,12 @@ const zoneTypeOptions = [
     { value: "additional", label: "Additional" },
 ];
 
-const moduleOptions = [
-    { value: "trip", label: "Trip Inspection Only" },
-    { value: "snow", label: "Snow Removal Only" },
-    { value: "both", label: "Both Trip & Snow" },
-];
-
-const priorityOptions = [
-    { value: "high", label: "High" },
-    { value: "medium", label: "Medium" },
-    { value: "low", label: "Low" },
-];
-
 export function AddZoneModal({ isOpen, onClose, onStartDrawing }: AddZoneModalProps) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
             zoneType: "proposed",
-            module: "trip",
-            priority: "medium",
         },
     });
 
@@ -85,20 +71,6 @@ export function AddZoneModal({ isOpen, onClose, onStartDrawing }: AddZoneModalPr
                             field="zoneType"
                             label="Zone Type"
                             options={zoneTypeOptions}
-                        />
-
-                        <InputSelect
-                            hookForm={form}
-                            field="module"
-                            label="Module"
-                            options={moduleOptions}
-                        />
-
-                        <InputSelect
-                            hookForm={form}
-                            field="priority"
-                            label="Priority"
-                            options={priorityOptions}
                         />
                     </div>
 

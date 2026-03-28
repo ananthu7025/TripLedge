@@ -30,7 +30,7 @@ export async function GET() {
 
     const [
       snowJobsToday,
-      completedSnowJobs,
+      completedSnowJobsCount,
       tripInspectionsToday,
       completedTripsThisWeek,
     ] = await Promise.all([
@@ -46,16 +46,17 @@ export async function GET() {
         )
         .then((r) => r[0]?.count ?? 0),
 
-      // All completed snow jobs by this user (for total removed sum)
+      // Count of completed snow jobs by this user
       db
-        .select({ highPoint: snowRemovals.highPoint, lowPoint: snowRemovals.lowPoint, length: snowRemovals.length })
+        .select({ count: sql<number>`count(*)::int` })
         .from(snowRemovals)
         .where(
           and(
             eq(snowRemovals.completedBy, user.id),
             eq(snowRemovals.status, 'completed')
           )
-        ),
+        )
+        .then((r) => r[0]?.count ?? 0),
 
       // Trip inspections created today by this user
       db
@@ -83,18 +84,9 @@ export async function GET() {
         .then((r) => r[0]?.count ?? 0),
     ]);
 
-    const totalSnowRemoved = completedSnowJobs.reduce((sum, job) => {
-      return (
-        sum +
-        parseFloat(job.highPoint ?? '0') +
-        parseFloat(job.lowPoint ?? '0') +
-        parseFloat(job.length ?? '0')
-      );
-    }, 0);
-
     return NextResponse.json({
       snowJobsToday,
-      totalSnowRemoved: parseFloat(totalSnowRemoved.toFixed(2)),
+      totalSnowRemoved: completedSnowJobsCount,
       tripInspectionsToday,
       completedTripsThisWeek,
     });

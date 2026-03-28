@@ -5,6 +5,8 @@ import { requireMobileAuth } from '@/lib/utils/session';
 import { logAudit } from '@/lib/utils/audit';
 import { eq } from 'drizzle-orm';
 
+const REQUIRED_AFTER_PHOTOS = 5;
+
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -12,18 +14,29 @@ export async function POST(
     try {
         const user = await requireMobileAuth();
         const { id } = await params;
-        const { after_photos, tools_used, solution_description } = await request.json();
+        const { after_photos, tools_used, materials_used, solution_description, crew_members } = await request.json();
 
-        if (!after_photos || !Array.isArray(after_photos) || after_photos.length === 0) {
-            return NextResponse.json({ error: 'after_photos must be a non-empty array' }, { status: 400 });
+        if (!after_photos || !Array.isArray(after_photos) || after_photos.length < REQUIRED_AFTER_PHOTOS) {
+            return NextResponse.json(
+                { error: `after_photos must contain exactly ${REQUIRED_AFTER_PHOTOS} photos` },
+                { status: 400 }
+            );
         }
 
-        if (!tools_used || typeof tools_used !== 'string' || tools_used.trim() === '') {
-            return NextResponse.json({ error: 'tools_used is required' }, { status: 400 });
+        if (!tools_used || !Array.isArray(tools_used) || tools_used.length === 0) {
+            return NextResponse.json({ error: 'tools_used must be a non-empty array' }, { status: 400 });
+        }
+
+        if (!materials_used || !Array.isArray(materials_used) || materials_used.length === 0) {
+            return NextResponse.json({ error: 'materials_used must be a non-empty array' }, { status: 400 });
         }
 
         if (!solution_description || typeof solution_description !== 'string' || solution_description.trim() === '') {
             return NextResponse.json({ error: 'solution_description is required' }, { status: 400 });
+        }
+
+        if (!crew_members || !Array.isArray(crew_members) || crew_members.length === 0) {
+            return NextResponse.json({ error: 'crew_members must be a non-empty array' }, { status: 400 });
         }
 
         const snow = await db.query.snowRemovals.findFirst({
@@ -43,8 +56,10 @@ export async function POST(
                 status: 'completed',
                 completedBy: user.id,
                 completedAt: new Date(),
-                toolsUsed: tools_used.trim(),
+                toolsUsed: JSON.stringify(tools_used),
+                materialsUsed: JSON.stringify(materials_used),
                 solutionDescription: solution_description.trim(),
+                crewMembers: JSON.stringify(crew_members),
                 updatedAt: new Date(),
             })
             .where(eq(snowRemovals.id, id));

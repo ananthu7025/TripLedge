@@ -14,14 +14,6 @@ export default async function SnowRemovalPage() {
     await requireAuth();
 
     const removals = await db.query.snowRemovals.findMany({
-        with: {
-            zone: {
-                columns: {
-                    name: true,
-                    priority: true,
-                }
-            }
-        },
         orderBy: [desc(snowRemovals.createdAt)],
     });
 
@@ -29,18 +21,11 @@ export default async function SnowRemovalPage() {
         id: s.id,
         snowId: s.snowId,
         streetName: s.streetName,
-        avenueName: s.avenueName,
-        zoneType: s.zoneType as any,
+        houseNo: s.houseNo,
         status: s.status as any,
-        notes: s.notes,
         createdAt: s.createdAt?.toISOString() || "",
         inspectedAt: s.inspectedAt?.toISOString() || null,
         completedAt: s.completedAt?.toISOString() || null,
-        zoneId: s.zoneId,
-        zone: {
-            name: s.zone.name,
-            priority: s.zone.priority,
-        }
     }));
 
     return (

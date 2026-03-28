@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { snowRemovals } from '@/db/schema';
+import { tripInspections } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
 import { eq, and, isNotNull, desc } from 'drizzle-orm';
 
 // GET /api/mobile/zones/:id/addresses
-// Returns distinct street names previously used for snow jobs in this zone
+// Returns distinct street names previously used for trip jobs in this zone
 export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -15,10 +15,10 @@ export async function GET(
         const { id } = await params;
 
         const rows = await db
-            .select({ streetName: snowRemovals.streetName, createdAt: snowRemovals.createdAt })
-            .from(snowRemovals)
-            .where(and(eq(snowRemovals.zoneId, id), isNotNull(snowRemovals.streetName)))
-            .orderBy(desc(snowRemovals.createdAt));
+            .select({ streetName: tripInspections.streetName, createdAt: tripInspections.createdAt })
+            .from(tripInspections)
+            .where(and(eq(tripInspections.zoneId, id), isNotNull(tripInspections.streetName)))
+            .orderBy(desc(tripInspections.createdAt));
 
         // Deduplicate while preserving most-recent-first order
         const seen = new Set<string>();

@@ -21,7 +21,7 @@ export async function GET() {
           id: true,
           status: true,
           streetName: true,
-          avenueName: true,
+          houseNo: true,
           inspectedAt: true,
           completedAt: true,
           createdAt: true,
@@ -40,7 +40,7 @@ export async function GET() {
           id: true,
           status: true,
           streetName: true,
-          avenueName: true,
+          houseNo: true,
           inspectedAt: true,
           completedAt: true,
           createdAt: true,
@@ -62,7 +62,7 @@ export async function GET() {
         type: j.type,
         status: j.status,
         streetName: j.streetName ?? null,
-        avenueName: j.avenueName ?? null,
+        houseNo: j.houseNo ?? null,
         timestamp:
           j.status === 'completed'
             ? j.completedAt

@@ -12,7 +12,7 @@ export async function POST(
     try {
         const user = await requireMobileAuth();
         const { id } = await params;
-        const { after_photos, notes } = await request.json();
+        const { after_photos, notes, completed_users } = await request.json();
 
         if (!after_photos || !Array.isArray(after_photos) || after_photos.length === 0) {
             return NextResponse.json({ error: 'after_photos must be a non-empty array' }, { status: 400 });
@@ -36,6 +36,7 @@ export async function POST(
                 completedBy: user.id,
                 completedAt: new Date(),
                 notes: notes ?? null,
+                completedUsers: completed_users && Array.isArray(completed_users) ? JSON.stringify(completed_users) : null,
                 updatedAt: new Date(),
             })
             .where(eq(tripInspections.id, id));

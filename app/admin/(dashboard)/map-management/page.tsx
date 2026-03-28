@@ -22,8 +22,6 @@ export default async function MapManagementPage() {
     id: z.id,
     name: z.name,
     zoneType: z.zoneType as any,
-    module: z.module as any,
-    priority: z.priority as any,
     points: JSON.parse(z.pointsGeojson),
     isActive: z.isActive ?? true,
     totalPoints: z.totalPoints ?? 0,

@@ -61,25 +61,27 @@ export async function GET(
         if (report.type === 'trip' || report.type === 'snow') {
             const isTrip = report.type === 'trip';
 
-            const query = isTrip
-                ? db.select({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let query: any;
+            if (isTrip) {
+                query = db.select({
                     id: tripInspections.id, jobId: tripInspections.tripId,
-                    zone: zones.name, zoneType: tripInspections.zoneType,
+                    zone: zones.name,
                     status: tripInspections.status, streetName: tripInspections.streetName,
-                    avenueName: tripInspections.avenueName, highPoint: tripInspections.highPoint,
+                    houseNo: tripInspections.houseNo, highPoint: tripInspections.highPoint,
                     lowPoint: tripInspections.lowPoint, length: tripInspections.length,
                     notes: tripInspections.notes, inspectedAt: tripInspections.inspectedAt,
                     completedAt: tripInspections.completedAt, createdAt: tripInspections.createdAt,
-                }).from(tripInspections).leftJoin(zones, eq(tripInspections.zoneId, zones.id))
-                : db.select({
+                }).from(tripInspections).leftJoin(zones, eq(tripInspections.zoneId, zones.id));
+            } else {
+                query = db.select({
                     id: snowRemovals.id, jobId: snowRemovals.snowId,
-                    zone: zones.name, zoneType: snowRemovals.zoneType,
                     status: snowRemovals.status, streetName: snowRemovals.streetName,
-                    avenueName: snowRemovals.avenueName, highPoint: snowRemovals.highPoint,
-                    lowPoint: snowRemovals.lowPoint, length: snowRemovals.length,
-                    notes: snowRemovals.notes, inspectedAt: snowRemovals.inspectedAt,
+                    houseNo: snowRemovals.houseNo,
+                    inspectedAt: snowRemovals.inspectedAt,
                     completedAt: snowRemovals.completedAt, createdAt: snowRemovals.createdAt,
-                }).from(snowRemovals).leftJoin(zones, eq(snowRemovals.zoneId, zones.id));
+                }).from(snowRemovals);
+            }
 
             const conditions = [];
             if (isTrip) {
@@ -92,8 +94,7 @@ export async function GET(
                 if (report.relatedId) conditions.push(eq(snowRemovals.snowId, report.relatedId));
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const rows = conditions.length ? await (query as any).where(and(...conditions)) : await query;
+            const rows = conditions.length ? await query.where(and(...conditions)) : await query;
             const jobIds = rows.map((r: { id: string }) => r.id);
 
             const photoRecords = jobIds.length
@@ -108,23 +109,37 @@ export async function GET(
             const imgCache = new Map(fetched.filter(f => f.buf).map(f => [f.url, f.buf as Buffer]));
 
             const idLabel = isTrip ? 'Trip ID' : 'Snow ID';
-            ws.columns = [
-                { header: idLabel,           key: 'jobId',     width: 12 },
-                { header: 'Zone',            key: 'zone',      width: 18 },
-                { header: 'Zone Type',       key: 'zoneType',  width: 12 },
-                { header: 'Status',          key: 'status',    width: 12 },
-                { header: 'Street Name',     key: 'street',    width: 18 },
-                { header: 'Avenue / Cross',  key: 'avenue',    width: 18 },
-                { header: 'High Point (cm)', key: 'high',      width: 14 },
-                { header: 'Low Point (cm)',  key: 'low',       width: 14 },
-                { header: 'Length (m)',      key: 'length',    width: 12 },
-                { header: 'Notes',           key: 'notes',     width: 24 },
-                { header: 'Before Photos',   key: 'before',    width: 20 },
-                { header: 'After Photos',    key: 'after',     width: 20 },
-                { header: 'Inspected At',    key: 'inspected', width: 20 },
-                { header: 'Completed At',    key: 'completed', width: 20 },
-                { header: 'Created At',      key: 'created',   width: 20 },
-            ];
+
+            if (isTrip) {
+                ws.columns = [
+                    { header: idLabel,           key: 'jobId',     width: 12 },
+                    { header: 'Zone',            key: 'zone',      width: 18 },
+                    { header: 'Status',          key: 'status',    width: 12 },
+                    { header: 'Street Name',     key: 'street',    width: 18 },
+                    { header: 'House No',        key: 'houseNo',   width: 14 },
+                    { header: 'High Point (cm)', key: 'high',      width: 14 },
+                    { header: 'Low Point (cm)',  key: 'low',       width: 14 },
+                    { header: 'Length (m)',      key: 'length',    width: 12 },
+                    { header: 'Notes',           key: 'notes',     width: 24 },
+                    { header: 'Before Photos',   key: 'before',    width: 20 },
+                    { header: 'After Photos',    key: 'after',     width: 20 },
+                    { header: 'Inspected At',    key: 'inspected', width: 20 },
+                    { header: 'Completed At',    key: 'completed', width: 20 },
+                    { header: 'Created At',      key: 'created',   width: 20 },
+                ];
+            } else {
+                ws.columns = [
+                    { header: idLabel,           key: 'jobId',     width: 12 },
+                    { header: 'Status',          key: 'status',    width: 12 },
+                    { header: 'Street Name',     key: 'street',    width: 18 },
+                    { header: 'House No',        key: 'houseNo',   width: 14 },
+                    { header: 'Before Photos',   key: 'before',    width: 20 },
+                    { header: 'After Photos',    key: 'after',     width: 20 },
+                    { header: 'Inspected At',    key: 'inspected', width: 20 },
+                    { header: 'Completed At',    key: 'completed', width: 20 },
+                    { header: 'Created At',      key: 'created',   width: 20 },
+                ];
+            }
             styleHeader(ws);
 
             const beforeColIdx = ws.columns.findIndex(c => c.key === 'before') + 1;
@@ -134,13 +149,22 @@ export async function GET(
                 const r = rows[i];
                 const rowNum = i + 2;
 
-                ws.addRow({
-                    jobId: r.jobId, zone: r.zone ?? '', zoneType: r.zoneType,
-                    status: r.status, street: r.streetName ?? '', avenue: r.avenueName ?? '',
-                    high: r.highPoint ?? '', low: r.lowPoint ?? '', length: r.length ?? '',
-                    notes: r.notes ?? '', before: '', after: '',
-                    inspected: fmt(r.inspectedAt), completed: fmt(r.completedAt), created: fmt(r.createdAt),
-                });
+                if (isTrip) {
+                    ws.addRow({
+                        jobId: r.jobId, zone: r.zone ?? '', status: r.status,
+                        street: r.streetName ?? '', houseNo: r.houseNo ?? '',
+                        high: r.highPoint ?? '', low: r.lowPoint ?? '', length: r.length ?? '',
+                        notes: r.notes ?? '', before: '', after: '',
+                        inspected: fmt(r.inspectedAt), completed: fmt(r.completedAt), created: fmt(r.createdAt),
+                    });
+                } else {
+                    ws.addRow({
+                        jobId: r.jobId, status: r.status,
+                        street: r.streetName ?? '', houseNo: r.houseNo ?? '',
+                        before: '', after: '',
+                        inspected: fmt(r.inspectedAt), completed: fmt(r.completedAt), created: fmt(r.createdAt),
+                    });
+                }
 
                 const rowPhotos = photoRecords.filter((p: { jobId: string }) => p.jobId === r.id);
                 const beforeBufs = rowPhotos

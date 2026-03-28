@@ -32,8 +32,6 @@ export const zones = pgTable('zones', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 100 }).notNull(),
   zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
-  module: varchar('module', { length: 20 }).notNull(), // trip, snow, both
-  priority: varchar('priority', { length: 20 }).notNull(), // high, medium, low
   pointsGeojson: text('points_geojson').notNull(), // stores all polyline points as JSON array [{lat, lng, order}]
   totalPoints: integer('total_points').default(0).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
@@ -56,11 +54,12 @@ export const tripInspections = pgTable('trip_inspections', {
   id: uuid('id').primaryKey().defaultRandom(),
   tripId: varchar('trip_id', { length: 20 }).unique().notNull(), // T-001, T-002...
   zoneId: uuid('zone_id').references(() => zones.id).notNull(),
-  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician marks as inspected
-  completedBy: uuid('completed_by').references(() => users.id), // filled when technician marks as completed
+  inspectedBy: uuid('inspected_by').references(() => users.id), // primary user who submitted inspection
+  completedBy: uuid('completed_by').references(() => users.id), // primary user who submitted completion
   streetName: varchar('street_name', { length: 100 }),
-  avenueName: varchar('avenue_name', { length: 100 }),
-  zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
+  houseNo: varchar('house_no', { length: 50 }),
+  inspectedUsers: text('inspected_users'), // JSON array of user IDs for inspection crew
+  completedUsers: text('completed_users'), // JSON array of user IDs for completion crew
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, inspected, completed
   capturedLatitude: decimal('captured_latitude', { precision: 10, scale: 7 }),
   capturedLongitude: decimal('captured_longitude', { precision: 10, scale: 7 }),
@@ -82,22 +81,19 @@ export const tripInspections = pgTable('trip_inspections', {
 export const snowRemovals = pgTable('snow_removals', {
   id: uuid('id').primaryKey().defaultRandom(),
   snowId: varchar('snow_id', { length: 20 }).unique().notNull(), // S-001, S-002...
-  zoneId: uuid('zone_id').references(() => zones.id).notNull(),
-  inspectedBy: uuid('inspected_by').references(() => users.id), // filled when technician starts job
-  completedBy: uuid('completed_by').references(() => users.id), // filled when technician completes job
+  inspectedBy: uuid('inspected_by').references(() => users.id), // primary user who submitted inspection
+  completedBy: uuid('completed_by').references(() => users.id), // primary user who submitted completion
   streetName: varchar('street_name', { length: 100 }),
-  avenueName: varchar('avenue_name', { length: 100 }),
-  zoneType: varchar('zone_type', { length: 20 }).notNull(), // proposed, additional
+  houseNo: varchar('house_no', { length: 50 }),
+  issuesReported: text('issues_reported'),         // JSON array of issue strings (inspection phase)
+  additionalComments: text('additional_comments'), // free-text notes from inspection phase
+  materialsUsed: text('materials_used'),           // JSON array of material strings (completion phase)
+  toolsUsed: text('tools_used'),                   // JSON array of tool strings (completion phase)
+  solutionDescription: text('solution_description'), // how the problem was solved (completion phase)
+  crewMembers: text('crew_members'),               // JSON array of user IDs (completion phase)
   status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, inspected, completed
   capturedLatitude: decimal('captured_latitude', { precision: 10, scale: 7 }),
   capturedLongitude: decimal('captured_longitude', { precision: 10, scale: 7 }),
-  highPoint: decimal('high_point', { precision: 10, scale: 2 }),
-  lowPoint: decimal('low_point', { precision: 10, scale: 2 }),
-  length: decimal('length', { precision: 10, scale: 2 }),
-  problemDescription: text('problem_description'),   // what problem is the site having
-  toolsUsed: text('tools_used'),                     // what tools were used (filled at complete)
-  solutionDescription: text('solution_description'), // how the problem was solved (filled at complete)
-  notes: text('notes'),
   inspectedAt: timestamp('inspected_at'),   // = job start time
   completedAt: timestamp('completed_at'),   // = job end time
   createdBy: uuid('created_by').references(() => users.id).notNull(),
@@ -306,10 +302,6 @@ export const tripInspectionsRelations = relations(tripInspections, ({ one }) => 
 }));
 
 export const snowRemovalsRelations = relations(snowRemovals, ({ one }) => ({
-  zone: one(zones, {
-    fields: [snowRemovals.zoneId],
-    references: [zones.id],
-  }),
   inspectedByUser: one(users, {
     fields: [snowRemovals.inspectedBy],
     references: [users.id],
@@ -393,4 +385,4 @@ export const blogsRelations = relations(blogs, ({ one }) => ({
   }),
 }));
 
-export const contactRequestsRelations = relations(contactRequests, ({ one }) => ({}));
+export const contactRequestsRelations = relations(contactRequests, () => ({}));

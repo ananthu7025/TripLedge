@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
         where: eq(snowRemovals.status, status),
         orderBy: [desc(snowRemovals.createdAt)],
         with: {
-          zone: true,
           inspectedByUser: {
             columns: {
               id: true,
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
       snows = await db.query.snowRemovals.findMany({
         orderBy: [desc(snowRemovals.createdAt)],
         with: {
-          zone: true,
           inspectedByUser: {
             columns: {
               id: true,

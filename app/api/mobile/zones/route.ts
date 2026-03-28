@@ -30,8 +30,6 @@ export async function GET() {
                 id: zone.id,
                 name: zone.name,
                 zoneType: zone.zoneType,
-                module: zone.module,
-                priority: zone.priority,
                 startPoint,
                 pointsGeojson: zone.pointsGeojson,
                 totalPoints: zone.totalPoints,

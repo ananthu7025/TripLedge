@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { zones, tripInspections, snowRemovals } from '@/db/schema';
+import { zones, tripInspections } from '@/db/schema';
 import { requireMobileAuth } from '@/lib/utils/session';
 import { eq, desc } from 'drizzle-orm';
 
 // GET /api/mobile/zones/:id/last-job
-// Returns street_name and avenue_name from the most recently created job for this zone
+// Returns street_name and house_no from the most recently created trip job for this zone
 export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -23,29 +23,18 @@ export async function GET(
         }
 
         let streetName: string | null = null;
-        let avenueName: string | null = null;
+        let houseNo: string | null = null;
 
-        if (zone.module === 'trip' || zone.module === 'both') {
-            const last = await db.query.tripInspections.findFirst({
-                where: eq(tripInspections.zoneId, id),
-                orderBy: [desc(tripInspections.createdAt)],
-            });
-            if (last) {
-                streetName = last.streetName ?? null;
-                avenueName = last.avenueName ?? null;
-            }
-        } else if (zone.module === 'snow') {
-            const last = await db.query.snowRemovals.findFirst({
-                where: eq(snowRemovals.zoneId, id),
-                orderBy: [desc(snowRemovals.createdAt)],
-            });
-            if (last) {
-                streetName = last.streetName ?? null;
-                avenueName = last.avenueName ?? null;
-            }
+        const last = await db.query.tripInspections.findFirst({
+            where: eq(tripInspections.zoneId, id),
+            orderBy: [desc(tripInspections.createdAt)],
+        });
+        if (last) {
+            streetName = last.streetName ?? null;
+            houseNo = last.houseNo ?? null;
         }
 
-        return NextResponse.json({ streetName, avenueName });
+        return NextResponse.json({ streetName, houseNo });
     } catch (error: any) {
         if (error.message === 'Unauthorized') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

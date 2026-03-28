@@ -18,7 +18,6 @@ export default async function TripInspectionPage() {
             zone: {
                 columns: {
                     name: true,
-                    priority: true,
                 }
             }
         },
@@ -28,17 +27,15 @@ export default async function TripInspectionPage() {
     const formattedTrips: TripInspection[] = inspections.map((t) => ({
         id: t.id,
         tripId: t.tripId,
+        zoneId: t.zoneId,
         streetName: t.streetName,
-        avenueName: t.avenueName,
-        zoneType: t.zoneType as any,
+        houseNo: t.houseNo,
         status: t.status as any,
         notes: t.notes,
         inspectedAt: t.inspectedAt?.toISOString() || null,
         completedAt: t.completedAt?.toISOString() || null,
-        zoneId: t.zoneId,
         zone: {
             name: t.zone.name,
-            priority: t.zone.priority,
         }
     }));
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { MAP_CONSTANTS } from "@/app/utils/constants";
 import { type Zone } from "@/app/utils/schemas/zone.schema";
 import {
     Table,
@@ -12,8 +11,6 @@ import {
     TableRow,
     TableCell
 } from "@/components/ui/Table";
-
-const { PRIORITY_COLORS } = MAP_CONSTANTS;
 
 interface ZonesTableProps {
     zones: Zone[];
@@ -53,8 +50,6 @@ export const ZonesTable = React.memo(({
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Type</TableHead>
-                            <TableHead>Module</TableHead>
-                            <TableHead>Priority</TableHead>
                             <TableHead>Points</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -67,15 +62,6 @@ export const ZonesTable = React.memo(({
                                     <Badge variant={zone.zoneType === 'proposed' ? 'success' : 'warning'}>
                                         {zone.zoneType}
                                     </Badge>
-                                </TableCell>
-                                <TableCell className="capitalize">{zone.module}</TableCell>
-                                <TableCell>
-                                    <span
-                                        style={{ color: PRIORITY_COLORS[zone.priority] }}
-                                        className="font-bold uppercase text-xs"
-                                    >
-                                        {zone.priority}
-                                    </span>
                                 </TableCell>
                                 <TableCell>{zone.totalPoints}</TableCell>
                                 <TableCell className="text-right">
@@ -94,7 +80,7 @@ export const ZonesTable = React.memo(({
                         ))}
                         {filteredZones.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                                     No zones found
                                 </TableCell>
                             </TableRow>
