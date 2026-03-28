@@ -20,6 +20,7 @@ import {
   HelpCircle,
   LogOut,
   BookOpen,
+  SlidersHorizontal,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { name: "Map Management", href: "/admin/map-management", icon: MapIcon },
   { name: "Trip Inspection", href: "/admin/trip-inspection", icon: HardHat },
   { name: "Snow Removal", href: "/admin/snow-removal", icon: Snowflake },
+  { name: "Dropdown Options", href: "/admin/dropdown-options", icon: SlidersHorizontal },
   { name: "Check-In Requests", href: "/admin/check-in-requests", icon: UserCheck, badge: 2 },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Targets", href: "/admin/targets", icon: Target },

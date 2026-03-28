@@ -265,6 +265,21 @@ export const contactRequests = pgTable('contact_requests', {
 });
 
 // ─────────────────────────────
+// DROPDOWN OPTIONS
+// ─────────────────────────────
+
+export const dropdownOptions = pgTable('dropdown_options', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  category: varchar('category', { length: 50 }).notNull(), // 'snow_issues' | 'snow_tools' | 'snow_materials'
+  label: varchar('label', { length: 100 }).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdBy: uuid('created_by').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ─────────────────────────────
 // RELATIONS
 // ─────────────────────────────
 
@@ -386,3 +401,10 @@ export const blogsRelations = relations(blogs, ({ one }) => ({
 }));
 
 export const contactRequestsRelations = relations(contactRequests, () => ({}));
+
+export const dropdownOptionsRelations = relations(dropdownOptions, ({ one }) => ({
+  createdByUser: one(users, {
+    fields: [dropdownOptions.createdBy],
+    references: [users.id],
+  }),
+}));
