@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contactRequests } from '@/db/schema';
+import { desc } from 'drizzle-orm';
+
+export async function GET() {
+  try {
+    const requests = await db.select().from(contactRequests).orderBy(desc(contactRequests.createdAt));
+    return NextResponse.json({ requests }, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching contact requests:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {

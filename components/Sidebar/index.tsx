@@ -21,6 +21,7 @@ import {
   LogOut,
   BookOpen,
   SlidersHorizontal,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { name: "Snow Removal", href: "/admin/snow-removal", icon: Snowflake },
   { name: "Dropdown Options", href: "/admin/dropdown-options", icon: SlidersHorizontal },
   { name: "Check-In Requests", href: "/admin/check-in-requests", icon: UserCheck, badge: 2 },
+  { name: "Contact Requests", href: "/admin/contact-requests", icon: Mail },
   { name: "Reports", href: "/admin/reports", icon: FileText },
   { name: "Targets", href: "/admin/targets", icon: Target },
   { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
