@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { X } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +17,7 @@ interface AddZoneModalProps {
     isOpen: boolean;
     onClose: () => void;
     onStartDrawing: (data: ZoneFormData) => void;
+    nextLocationNumber: number;
 }
 
 const formSchema = zoneSchema.omit({ points: true });
@@ -26,14 +28,20 @@ const zoneTypeOptions = [
     { value: "additional", label: "Additional" },
 ];
 
-export function AddZoneModal({ isOpen, onClose, onStartDrawing }: AddZoneModalProps) {
+export function AddZoneModal({ isOpen, onClose, onStartDrawing, nextLocationNumber }: AddZoneModalProps) {
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "",
+            name: `Location ${nextLocationNumber}`,
             zoneType: "proposed",
         },
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            form.reset({ name: `Location ${nextLocationNumber}`, zoneType: "proposed" });
+        }
+    }, [isOpen, nextLocationNumber]);
 
     if (!isOpen) return null;
 
@@ -61,7 +69,7 @@ export function AddZoneModal({ isOpen, onClose, onStartDrawing }: AddZoneModalPr
                         hookForm={form}
                         field="name"
                         label="Zone Name"
-                        placeholder="e.g., 100th Street"
+                        placeholder={`Location ${nextLocationNumber}`}
                         labelMandatory
                     />
 

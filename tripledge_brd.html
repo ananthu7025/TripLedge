@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tripledge – Product Requirements Document</title>
+<style>
+  :root {
+    --ink: #1a1a18;
+    --ink2: #44433f;
+    --ink3: #76756f;
+    --surface: #ffffff;
+    --surface2: #f5f4f0;
+    --surface3: #eeede8;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.18);
+    --blue50: #E6F1FB; --blue100: #B5D4F4; --blue600: #185FA5; --blue800: #0C447C;
+    --teal50: #E1F5EE; --teal600: #0F6E56; --teal800: #085041;
+    --amber50: #FAEEDA; --amber600: #854F0B; --amber800: #633806;
+    --green50: #EAF3DE; --green600: #3B6D11; --green800: #27500A;
+    --coral50: #FAECE7; --coral600: #993C1D; --coral800: #712B13;
+    --purple50: #EEEDFE; --purple600: #534AB7; --purple800: #3C3489;
+    --gray50: #F1EFE8; --gray600: #5F5E5A; --gray800: #444441;
+    --red50: #FCEBEB; --red600: #A32D2D;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--surface);
+    line-height: 1.65;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e8e7e0; --ink2: #b4b2a9; --ink3: #76756f;
+      --surface: #1a1a18; --surface2: #242421; --surface3: #2e2e2b;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { max-width: 900px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  /* Cover */
+  .cover { border-bottom: 1.5px solid var(--border2); padding-bottom: 36px; margin-bottom: 40px; }
+  .cover-label { font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 0.12em; color: var(--ink3); text-transform: uppercase; margin-bottom: 10px; }
+  .cover-title { font-size: 38px; font-weight: 700; line-height: 1.15; color: var(--ink); margin-bottom: 8px; }
+  .cover-sub { font-size: 16px; color: var(--ink2); font-style: italic; margin-bottom: 24px; }
+  .cover-meta { display: flex; gap: 32px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--ink3); }
+
+  /* Nav */
+  .toc { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 40px; }
+  .toc-title { font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase; font-family: 'Courier New', monospace; color: var(--ink3); margin-bottom: 14px; }
+  .toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; }
+  .toc a { color: var(--ink2); text-decoration: none; font-size: 14px; }
+  .toc a:hover { color: var(--ink); text-decoration: underline; }
+
+  /* Section headers */
+  h2 { font-size: 22px; color: var(--ink); margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1.5px solid var(--border2); }
+  h3 { font-size: 17px; color: var(--ink); margin: 32px 0 10px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--ink2); margin: 22px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Courier New', monospace; }
+  p { margin-bottom: 10px; color: var(--ink2); font-size: 14px; }
+
+  /* Section label */
+  .section-tag { display: inline-block; font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; }
+  .tag-snow { background: var(--blue50); color: var(--blue800); }
+  .tag-trip { background: var(--teal50); color: var(--teal800); }
+  .tag-admin { background: var(--purple50); color: var(--purple800); }
+  .tag-logic { background: var(--amber50); color: var(--amber800); }
+
+  /* Tables */
+  .tbl-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 8px; border: 0.5px solid var(--border2); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--surface2); }
+  th { text-align: left; padding: 9px 14px; font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; color: var(--ink3); border-bottom: 0.5px solid var(--border2); font-family: 'Courier New', monospace; }
+  td { padding: 9px 14px; vertical-align: top; border-bottom: 0.5px solid var(--border); color: var(--ink2); line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .badge { display: inline-block; font-size: 10px; font-family: 'Courier New', monospace; padding: 2px 7px; border-radius: 4px; font-weight: 700; }
+  .bd-text { background: var(--blue50); color: var(--blue800); }
+  .bd-drop { background: var(--teal50); color: var(--teal800); }
+  .bd-photo { background: var(--green50); color: var(--green800); }
+  .bd-geo { background: var(--amber50); color: var(--amber800); }
+  .bd-bool { background: var(--coral50); color: var(--coral800); }
+  .bd-num { background: var(--purple50); color: var(--purple800); }
+  .bd-opt { background: var(--gray50); color: var(--gray800); }
+  .bd-req { background: var(--red50); color: var(--red600); }
+  .bd-mand { background: #FEF3C7; color: #92400E; }
+
+  /* Flow diagrams (SVG wrappers) */
+  .flow-wrap { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 10px; padding: 20px; margin: 20px 0 28px; overflow-x: auto; }
+  .flow-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; }
+
+  /* Card listing spec */
+  .card-spec { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 24px; }
+  .card-mock { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 10px; padding: 14px 18px; min-width: 220px; flex: 1; }
+  .card-mock-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Courier New', monospace; color: var(--ink3); margin-bottom: 8px; }
+  .cm-row { font-size: 13px; color: var(--ink2); margin-bottom: 4px; }
+  .cm-row strong { color: var(--ink); }
+  .cm-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 10px; font-family: 'Courier New', monospace; }
+  .status-insp { background: var(--amber50); color: var(--amber600); }
+  .status-comp { background: var(--green50); color: var(--green600); }
+
+  /* Formula box */
+  .formula-box { background: var(--surface2); border-left: 3px solid var(--purple600); border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 16px 0 24px; font-family: 'Courier New', monospace; font-size: 13px; color: var(--ink); line-height: 2; }
+  .formula-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.10em; color: var(--ink3); margin-bottom: 8px; }
+
+  /* Callout */
+  .callout { border: 0.5px solid var(--border2); border-left: 3px solid; border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: var(--ink2); }
+  .callout.info { border-left-color: var(--blue600); background: var(--blue50); color: var(--blue800); }
+  .callout.warn { border-left-color: #D97706; background: #FEF3C7; color: #92400E; }
+
+  /* Step list */
+  .step-list { list-style: none; counter-reset: steps; margin: 0 0 16px; }
+  .step-list li { counter-increment: steps; display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; color: var(--ink2); }
+  .step-list li:last-child { border-bottom: none; }
+  .step-list li::before { content: counter(steps); min-width: 24px; height: 24px; background: var(--surface3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; color: var(--ink3); flex-shrink: 0; }
+
+  /* Print */
+  @media print { body { padding: 24px; } h2 { page-break-before: always; } }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Product Requirements Document · v1.0</div>
+  <div class="cover-title">Tripledge</div>
+  <div class="cover-sub">Snow Removal & Trip Inspection Mobile App</div>
+  <div class="cover-meta">
+    <span>Status: Draft</span>
+    <span>Modules: Snow · Trip · Admin</span>
+    <span>Platform: Mobile (iOS/Android)</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <div class="toc-grid">
+    <a href="#overview">1. Overview</a>
+    <a href="#snow-flow">2. Snow — Workflow</a>
+    <a href="#snow-fields">3. Snow — Field Specs</a>
+    <a href="#trip-flow">4. Trip — Workflow</a>
+    <a href="#trip-fields">5. Trip — Field Specs</a>
+    <a href="#listing">6. Listing Pages</a>
+    <a href="#admin">7. Admin Panel</a>
+    <a href="#scoring">8. Scoring Matrix</a>
+    <a href="#map-mgmt">9. Map Management</a>
+  </div>
+</div>
+
+<!-- 1. OVERVIEW -->
+<h2 id="overview">1. Overview</h2>
+<p>Tripledge is a field operations mobile app with two core record types: <strong>Snow</strong> (snow removal jobs) and <strong>Trip</strong> (trip hazard inspections). Each record type has two sequential phases — <strong>Inspection</strong> and <strong>Completion</strong>. An Admin panel supports map management, job tracking, and user performance analytics.</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Module</th><th>Record Type</th><th>Phases</th><th>Key Output</th></tr></thead>
+  <tbody>
+    <tr><td>Snow</td><td>Snow Job</td><td>Inspection → Completion</td><td>Before/after photos, issue resolution log, crew record</td></tr>
+    <tr><td>Trip</td><td>Trip Inspection</td><td>Inspection → Completion</td><td>Measurements (H/L/Length), GPS coordinates, photo evidence</td></tr>
+    <tr><td>Admin</td><td>—</td><td>—</td><td>Map zones, job dashboard, user performance reports</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 2. SNOW FLOW -->
+<h2 id="snow-flow">2. Snow — Workflow</h2>
+<span class="section-tag tag-snow">Snow Module</span>
+
+<div class="flow-wrap">
+  <div class="flow-label">Snow Job Lifecycle</div>
+  <svg width="100%" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <!-- Start -->
+    <rect x="30" y="38" width="90" height="44" rx="22" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+    <text x="75" y="65" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Georgia" fill="#0C447C">New Job</text>
+    <!-- Arrow -->
+    <line x1="122" y1="60" x2="168" y2="60" stroke="#185FA5" stroke-width="1" marker-end="url(#arr)"/>
+    <!-- Inspection -->
+    <rect x="170" y="30" width="130" height="60" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.8"/>
+    <text x="235" y="54" text-anchor="middle" dominant-baseline="central" font-size="13" font-family="Georgia" font-weight="bold" fill="#0C447C">Inspection</text>
+    <text x="235" y="72" text-anchor="middle" font-size="11" font-family="Courier New" fill="#185FA5">6 fields + photo</text>
+    <!-- Arrow -->
+    <line x1="302" y1="60" x2="348" y2="60" stroke="#185FA5" stroke-width="1" marker-end="url(#arr)"/>
+    <text x="325" y="52" text-anchor="middle" font-size="10" font-family="Courier New" fill="#76756f">Create Job</text>
+    <!-- Completion -->
+    <rect x="350" y="30" width="140" height="60" rx="8" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.8"/>
+    <text x="420" y="54" text-anchor="middle" dominant-baseline="central" font-size="13" font-family="Georgia" font-weight="bold" fill="#085041">Completion</text>
+    <text x="420" y="72" text-anchor="middle" font-size="11" font-family="Courier New" fill="#0F6E56">6 fields + 5 photos</text>
+    <!-- Arrow -->
+    <line x1="492" y1="60" x2="538" y2="60" stroke="#0F6E56" stroke-width="1" marker-end="url(#arr)"/>
+    <!-- Done -->
+    <rect x="540" y="38" width="100" height="44" rx="22" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.8"/>
+    <text x="590" y="65" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Georgia" fill="#27500A">Job Complete</text>
+  </svg>
+</div>
+
+<!-- 3. SNOW FIELDS -->
+<h2 id="snow-fields">3. Snow — Field Specifications</h2>
+<span class="section-tag tag-snow">Snow Module</span>
+
+<h3>3.1 Inspection Phase</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>#</th><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Street Name</td><td><span class="badge bd-text">Text</span></td><td><span class="badge bd-req">Required</span></td><td>Free-text input</td></tr>
+    <tr><td>2</td><td>House No.</td><td><span class="badge bd-text">Text</span></td><td><span class="badge bd-req">Required</span></td><td>Alphanumeric; shown on listing card</td></tr>
+    <tr><td>3</td><td>Issues</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>Predefined issue list (e.g. Ice buildup, Drift, Pathway blocked…)</td></tr>
+    <tr><td>4</td><td>Additional Comments</td><td><span class="badge bd-text">Textarea</span></td><td><span class="badge bd-opt">Optional</span></td><td>Free-text; displayed in admin detail view</td></tr>
+    <tr><td>5</td><td>Before Photo</td><td><span class="badge bd-photo">Photo Upload</span></td><td><span class="badge bd-opt">Optional</span></td><td>Single photo; shown in admin & completion view</td></tr>
+    <tr><td>6</td><td><em>Create Job</em></td><td><span class="badge bd-bool">Action Button</span></td><td><span class="badge bd-req">Required</span></td><td>Submits inspection; advances to Completion phase</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.2 Completion Phase</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>#</th><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>How Problem Was Solved</td><td><span class="badge bd-text">Textarea</span></td><td><span class="badge bd-req">Required</span></td><td>Descriptive; shown in admin detail view</td></tr>
+    <tr><td>2</td><td>Tools Used</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>Predefined list (e.g. Shovel, Snowblower, Plow…)</td></tr>
+    <tr><td>3</td><td>Materials Used</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>Predefined list (e.g. Rock salt, Sand, Calcium chloride…)</td></tr>
+    <tr><td>4</td><td>After Photos</td><td><span class="badge bd-photo">Photo Upload</span></td><td><span class="badge bd-mand">5 Mandatory</span></td><td>Exactly 5 photos required to unlock Complete Job button</td></tr>
+    <tr><td>5</td><td>Crew Member(s)</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>Populated from Users table; multi-select; shown on listing card</td></tr>
+    <tr><td>6</td><td><em>Complete Job</em></td><td><span class="badge bd-bool">Action Button</span></td><td><span class="badge bd-req">Required</span></td><td>Enabled only when all required fields + 5 photos are filled</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 4. TRIP FLOW -->
+<h2 id="trip-flow">4. Trip — Workflow</h2>
+<span class="section-tag tag-trip">Trip Module</span>
+
+<div class="flow-wrap">
+  <div class="flow-label">Trip Inspection Lifecycle</div>
+  <svg width="100%" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <rect x="30" y="38" width="90" height="44" rx="22" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+    <text x="75" y="65" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Georgia" fill="#085041">New Trip</text>
+    <line x1="122" y1="60" x2="168" y2="60" stroke="#0F6E56" stroke-width="1" marker-end="url(#arr2)"/>
+    <rect x="170" y="30" width="140" height="60" rx="8" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.8"/>
+    <text x="240" y="54" text-anchor="middle" dominant-baseline="central" font-size="13" font-family="Georgia" font-weight="bold" fill="#085041">Inspection</text>
+    <text x="240" y="72" text-anchor="middle" font-size="11" font-family="Courier New" fill="#0F6E56">6 fields + GPS + photos</text>
+    <line x1="312" y1="60" x2="348" y2="60" stroke="#0F6E56" stroke-width="1" marker-end="url(#arr2)"/>
+    <rect x="350" y="30" width="140" height="60" rx="8" fill="#FAC775" stroke="#854F0B" stroke-width="0.8"/>
+    <text x="420" y="54" text-anchor="middle" dominant-baseline="central" font-size="13" font-family="Georgia" font-weight="bold" fill="#412402">Completion</text>
+    <text x="420" y="72" text-anchor="middle" font-size="11" font-family="Courier New" fill="#854F0B">4 fields + after photos</text>
+    <line x1="492" y1="60" x2="538" y2="60" stroke="#854F0B" stroke-width="1" marker-end="url(#arr2)"/>
+    <rect x="540" y="38" width="100" height="44" rx="22" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.8"/>
+    <text x="590" y="65" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Georgia" fill="#27500A">Complete</text>
+  </svg>
+</div>
+
+<!-- 5. TRIP FIELDS -->
+<h2 id="trip-fields">5. Trip — Field Specifications</h2>
+<span class="section-tag tag-trip">Trip Module</span>
+
+<h3>5.1 Inspection Phase</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>#</th><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Location (GPS)</td><td><span class="badge bd-geo">Auto-captured</span></td><td><span class="badge bd-req">Required</span></td><td>Latitude + Longitude auto-captured on form open; displayed read-only</td></tr>
+    <tr><td>2</td><td>Street Name</td><td><span class="badge bd-text">Text</span></td><td><span class="badge bd-req">Required</span></td><td>Shown on listing card</td></tr>
+    <tr><td>3</td><td>House Number</td><td><span class="badge bd-text">Text</span></td><td><span class="badge bd-req">Required</span></td><td>Shown on listing card</td></tr>
+    <tr><td>4a</td><td>Measurement — High Point</td><td><span class="badge bd-num">Numeric</span></td><td><span class="badge bd-req">Required</span></td><td>Unit: cm or mm (define per project). Used in scoring.</td></tr>
+    <tr><td>4b</td><td>Measurement — Low Point</td><td><span class="badge bd-num">Numeric</span></td><td><span class="badge bd-req">Required</span></td><td>Must be ≤ High Point; validated on input</td></tr>
+    <tr><td>4c</td><td>Measurement — Length</td><td><span class="badge bd-num">Numeric</span></td><td><span class="badge bd-req">Required</span></td><td>Total length of affected area; used in scoring</td></tr>
+    <tr><td>5</td><td>User(s)</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>From Users table; multi-select; shown on listing card</td></tr>
+    <tr><td>6</td><td>Before Photos</td><td><span class="badge bd-photo">Photo Upload</span></td><td><span class="badge bd-opt">Optional</span></td><td>Shown in admin detail view</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>5.2 Completion Phase</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>#</th><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>After Photos</td><td><span class="badge bd-photo">Photo Upload</span></td><td><span class="badge bd-req">Required</span></td><td>Minimum count TBD; shown in admin detail view</td></tr>
+    <tr><td>2</td><td>User(s)</td><td><span class="badge bd-drop">Dropdown Multi</span></td><td><span class="badge bd-req">Required</span></td><td>May differ from inspection crew; from Users table</td></tr>
+    <tr><td>3</td><td>Additional Notes</td><td><span class="badge bd-text">Textarea</span></td><td><span class="badge bd-opt">Optional</span></td><td>Free-text; shown in admin detail view</td></tr>
+    <tr><td>4</td><td><em>Complete Job</em></td><td><span class="badge bd-bool">Action Button</span></td><td><span class="badge bd-req">Required</span></td><td>Advances status to Completed</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 6. LISTING PAGES -->
+<h2 id="listing">6. Listing Pages</h2>
+
+<h3>6.1 Snow Job Listing Card</h3>
+<div class="card-spec">
+  <div class="card-mock">
+    <div class="card-mock-label">Snow Card — Visual Spec</div>
+    <div class="cm-row"><strong>Snow ID:</strong> SNW-0042</div>
+    <div class="cm-row"><strong>Street:</strong> Maple Drive</div>
+    <div class="cm-row"><strong>House No.:</strong> 14B</div>
+    <div class="cm-row"><strong>Crew:</strong> John D., Sarah M.</div>
+    <div class="cm-row" style="margin-top:8px"><span class="cm-badge status-insp">Inspection</span></div>
+  </div>
+  <div class="card-mock">
+    <div class="card-mock-label">Snow Card — Completed</div>
+    <div class="cm-row"><strong>Snow ID:</strong> SNW-0039</div>
+    <div class="cm-row"><strong>Street:</strong> Oak Lane</div>
+    <div class="cm-row"><strong>House No.:</strong> 7</div>
+    <div class="cm-row"><strong>Crew:</strong> Mike T.</div>
+    <div class="cm-row" style="margin-top:8px"><span class="cm-badge status-comp">Completed</span></div>
+  </div>
+</div>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Source</th><th>Always Visible</th></tr></thead>
+  <tbody>
+    <tr><td>Snow ID</td><td>Auto-generated</td><td>Yes</td></tr>
+    <tr><td>Street Name</td><td>Inspection field</td><td>Yes</td></tr>
+    <tr><td>House Number</td><td>Inspection field</td><td>Yes</td></tr>
+    <tr><td>Crew Member(s)</td><td>Completion field</td><td>Yes — show "—" until completion</td></tr>
+    <tr><td>Status</td><td>System</td><td>Yes — Inspection / Completed</td></tr>
+    <tr><td>Date/Time</td><td>System timestamp</td><td>Yes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>6.2 Trip Listing Card</h3>
+<div class="card-spec">
+  <div class="card-mock">
+    <div class="card-mock-label">Trip Card — Visual Spec</div>
+    <div class="cm-row"><strong>Trip ID:</strong> TRP-0017</div>
+    <div class="cm-row"><strong>Street:</strong> Elm Street</div>
+    <div class="cm-row"><strong>House No.:</strong> 22A</div>
+    <div class="cm-row"><strong>User(s):</strong> Alan K.</div>
+    <div class="cm-row" style="margin-top:8px"><span class="cm-badge status-insp">Inspection</span></div>
+  </div>
+  <div class="card-mock">
+    <div class="card-mock-label">Trip Card — Completed</div>
+    <div class="cm-row"><strong>Trip ID:</strong> TRP-0015</div>
+    <div class="cm-row"><strong>Street:</strong> Cedar Ave</div>
+    <div class="cm-row"><strong>House No.:</strong> 5</div>
+    <div class="cm-row"><strong>User(s):</strong> Priya S., Dev R.</div>
+    <div class="cm-row" style="margin-top:8px"><span class="cm-badge status-comp">Completed</span></div>
+  </div>
+</div>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Source</th><th>Always Visible</th></tr></thead>
+  <tbody>
+    <tr><td>Trip ID</td><td>Auto-generated</td><td>Yes</td></tr>
+    <tr><td>Street Name</td><td>Inspection field</td><td>Yes</td></tr>
+    <tr><td>House Number</td><td>Inspection field</td><td>Yes</td></tr>
+    <tr><td>User(s)</td><td>Inspection field</td><td>Yes</td></tr>
+    <tr><td>Status</td><td>System</td><td>Yes — Inspection / Completed</td></tr>
+    <tr><td>Date/Time</td><td>System timestamp</td><td>Yes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 7. ADMIN PANEL -->
+<h2 id="admin">7. Admin Panel</h2>
+<span class="section-tag tag-admin">Admin Module</span>
+
+<h3>7.1 Snow Jobs — Admin View</h3>
+
+<h4>List View Columns</h4>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Snow ID</td><td>Text</td><td>Unique auto-generated ID</td></tr>
+    <tr><td>Street Name</td><td>Text</td><td>From inspection</td></tr>
+    <tr><td>House Number</td><td>Text</td><td>From inspection</td></tr>
+    <tr><td>Status</td><td>Badge</td><td>Inspection / Completed</td></tr>
+    <tr><td>Inspection Start</td><td>DateTime</td><td>Timestamp when inspection form submitted</td></tr>
+    <tr><td>Completed At</td><td>DateTime</td><td>Timestamp when Complete Job pressed</td></tr>
+    <tr><td>Inspected Crew</td><td>Text list</td><td>From completion Crew Member field</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Detail View Contents</h4>
+<ul class="step-list">
+  <li>All listing fields above</li>
+  <li>Issues Reported (multi-select values)</li>
+  <li>Additional Comments</li>
+  <li>How Problem Was Solved</li>
+  <li>Tools Used + Materials Used</li>
+  <li>Before Photo (if uploaded)</li>
+  <li>After Photos (all 5)</li>
+</ul>
+
+<h3>7.2 Trip Inspections — Admin View</h3>
+
+<h4>List View Columns</h4>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Trip ID</td><td>Text</td><td>Unique auto-generated ID</td></tr>
+    <tr><td>Street Name</td><td>Text</td><td>From inspection</td></tr>
+    <tr><td>House Number</td><td>Text</td><td>From inspection</td></tr>
+    <tr><td>Location (Zone)</td><td>Text</td><td>Linked map location if applicable</td></tr>
+    <tr><td>Status</td><td>Badge</td><td>Inspection / Completed</td></tr>
+    <tr><td>Inspected Date</td><td>DateTime</td><td>Timestamp of inspection submission</td></tr>
+    <tr><td>Completed Date</td><td>DateTime</td><td>Timestamp of completion</td></tr>
+    <tr><td>Inspected User</td><td>Text list</td><td>From inspection User field</td></tr>
+    <tr><td>Completed User</td><td>Text list</td><td>From completion User field</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Detail View Contents</h4>
+<ul class="step-list">
+  <li>All listing fields above</li>
+  <li>GPS Coordinates (Lat / Long)</li>
+  <li>Measurements: High Point, Low Point, Length</li>
+  <li>Before Photos</li>
+  <li>After Photos</li>
+  <li>Additional Notes</li>
+  <li>Computed Trip Score (see §8)</li>
+</ul>
+
+<h3>7.3 User Performance Dashboard</h3>
+<p>Admin can view per-user performance reports covering both Snow and Trip activity.</p>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Metric</th><th>Module</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>Jobs completed</td><td>Snow</td><td>Count of snow jobs completed by user</td></tr>
+    <tr><td>Job date/time</td><td>Snow</td><td>When each job was done</td></tr>
+    <tr><td>Time taken</td><td>Snow</td><td>Duration: Inspection Start → Completed At</td></tr>
+    <tr><td>Photos submitted</td><td>Snow</td><td>Count of before/after photos per job</td></tr>
+    <tr><td>Trips completed</td><td>Trip</td><td>Count of trip inspections completed by user</td></tr>
+    <tr><td>Total length grinded</td><td>Trip</td><td>Sum of Length across all completed trips</td></tr>
+    <tr><td>Total difficulty grinded</td><td>Trip</td><td>Sum of (High − Low) × Length across all trips</td></tr>
+    <tr><td>Trip Score / Points</td><td>Trip</td><td>Computed using §8 scoring matrix</td></tr>
+    <tr><td>Timeline view</td><td>Both</td><td>Chronological log of all activity per user</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 8. SCORING MATRIX -->
+<h2 id="scoring">8. Trip Scoring Matrix</h2>
+<span class="section-tag tag-logic">Scoring Logic</span>
+
+<p>A single numeric <strong>Trip Score</strong> per record rewards both length and difficulty of work. Two workers with the same total length receive different scores if one dealt with a steeper height differential.</p>
+
+<div class="formula-box">
+  <div class="label">Core Formula — per Trip Record</div>
+  Difficulty  =  High Point − Low Point<br>
+  Trip Score  =  Length × (1 + Difficulty × Weight)<br><br>
+  <span style="color:var(--ink3)">// Weight is a tunable constant (recommend starting at 0.1 – 0.5)</span><br>
+  <span style="color:var(--ink3)">// All measurements in same unit (cm recommended)</span>
+</div>
+
+<div class="callout info">
+  <strong>Rationale:</strong> A user with Length=5, Difficulty=8 scores higher than a user with Length=5, Difficulty=2 — even though both covered the same distance. The Weight constant allows admins to tune how much difficulty is rewarded vs raw length.
+</div>
+
+<h4>Example Comparison</h4>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>User</th><th>Length</th><th>High</th><th>Low</th><th>Difficulty</th><th>Score (W=0.2)</th></tr></thead>
+  <tbody>
+    <tr><td>User A</td><td>5</td><td>10</td><td>2</td><td>8</td><td>5 × (1 + 8 × 0.2) = <strong>13.0</strong></td></tr>
+    <tr><td>User B</td><td>5</td><td>5</td><td>3</td><td>2</td><td>5 × (1 + 2 × 0.2) = <strong>7.0</strong></td></tr>
+    <tr><td>User C</td><td>4</td><td>12</td><td>3</td><td>9</td><td>4 × (1 + 9 × 0.2) = <strong>11.2</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>User A wins despite same length as User B. User C (shorter length, harder job) ranks between them.</p>
+
+<h4>Aggregated User Score</h4>
+<div class="formula-box">
+  <div class="label">Cumulative Score — across all trips for a user</div>
+  Total Score  =  Σ ( Length_i × (1 + Difficulty_i × Weight) )
+</div>
+
+<div class="callout warn">
+  <strong>Config note:</strong> The Weight constant should be configurable by the Admin (not hard-coded). Recommend exposing it in Admin → Settings.
+</div>
+
+<!-- 9. MAP MANAGEMENT -->
+<h2 id="map-mgmt">9. Admin — Map Management</h2>
+<span class="section-tag tag-admin">Admin Module</span>
+
+<h3>9.1 Location Addition Flow</h3>
+
+<div class="flow-wrap">
+  <div class="flow-label">Add Location Flow</div>
+  <svg width="100%" viewBox="0 0 680 130" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <rect x="20" y="35" width="110" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="75" y="58" text-anchor="middle" font-size="12" font-family="Georgia" font-weight="bold" fill="#3C3489">Open Map</text>
+    <text x="75" y="74" text-anchor="middle" font-size="10" font-family="Courier New" fill="#534AB7">Admin taps</text>
+    <line x1="132" y1="61" x2="163" y2="61" stroke="#534AB7" stroke-width="1" marker-end="url(#arr3)"/>
+    <rect x="165" y="35" width="120" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="225" y="55" text-anchor="middle" font-size="12" font-family="Georgia" font-weight="bold" fill="#3C3489">Plot Area</text>
+    <text x="225" y="72" text-anchor="middle" font-size="10" font-family="Courier New" fill="#534AB7">Draw polygon</text>
+    <line x1="287" y1="61" x2="318" y2="61" stroke="#534AB7" stroke-width="1" marker-end="url(#arr3)"/>
+    <rect x="320" y="35" width="130" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="385" y="55" text-anchor="middle" font-size="12" font-family="Georgia" font-weight="bold" fill="#3C3489">Set Type</text>
+    <text x="385" y="72" text-anchor="middle" font-size="10" font-family="Courier New" fill="#534AB7">Proposed / Additional</text>
+    <line x1="452" y1="61" x2="483" y2="61" stroke="#534AB7" stroke-width="1" marker-end="url(#arr3)"/>
+    <rect x="485" y="35" width="110" height="52" rx="8" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.8"/>
+    <text x="540" y="55" text-anchor="middle" font-size="12" font-family="Georgia" font-weight="bold" fill="#27500A">Save</text>
+    <text x="540" y="72" text-anchor="middle" font-size="10" font-family="Courier New" fill="#3B6D11">Location created</text>
+  </svg>
+</div>
+
+<h3>9.2 Location Fields</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td>Name</td><td><span class="badge bd-text">Auto-text</span></td><td>Auto-increments: "Location 1", "Location 2"… Editable by admin if needed.</td></tr>
+    <tr><td>Type</td><td><span class="badge bd-drop">Select</span></td><td><strong>Proposed</strong> = green pin/fill. <strong>Additional</strong> = yellow/orange pin/fill.</td></tr>
+    <tr><td>Area Plot</td><td><span class="badge bd-geo">Map Polygon</span></td><td>Admin draws boundary on map; stored as coordinate array.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Type → Colour Mapping</h4>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>Type Value</th><th>Map Colour</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Proposed</td><td style="color:var(--green600)">● Green</td><td>Standard / planned location</td></tr>
+    <tr><td>Additional</td><td style="color:#D97706">● Yellow / Orange</td><td>Extra / priority location</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout info">
+  <strong>Note:</strong> The old "Module" and "Priority" fields are <strong>removed</strong>. Priority is now entirely expressed through the Type field (Proposed / Additional) and its colour coding on the map.
+</div>
+
+<h3>9.3 Map Capabilities Summary</h3>
+<ul class="step-list">
+  <li>Add unlimited named locations with auto-incremented naming</li>
+  <li>Draw and store a polygon boundary per location</li>
+  <li>Assign type (Proposed / Additional) with colour-coded map rendering</li>
+  <li>Edit or delete existing locations from map</li>
+  <li>Trip inspections can be linked to a location zone (for admin filtering)</li>
+</ul>
+
+<!-- Footer -->
+<div style="margin-top:64px; padding-top:20px; border-top:0.5px solid var(--border2); font-family:'Courier New',monospace; font-size:11px; color:var(--ink3); display:flex; justify-content:space-between;">
+  <span>Tripledge PRD v1.0</span>
+  <span>For development use — all field lists (dropdowns) to be finalised with product team</span>
+</div>
+
+</body>
+</html>

@@ -102,7 +102,7 @@ export const SUCCESS_MESSAGES = {
 export const MAP_CONSTANTS = {
   NORTH_BATTLEFORD_CENTER: { lat: 52.7745, lng: -108.302 },
   LINE_COLORS: {
-    proposed: '#2dd4bf',
+    proposed: '#22c55e',
     additional: '#f59e0b',
   },
   PRIORITY_COLORS: {

@@ -195,6 +195,7 @@ export function MapManagementClient({ initialZones, googleMapsApiKey }: MapManag
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onStartDrawing={handleStartDrawing}
+                nextLocationNumber={zones.length + 1}
             />
 
             <DeleteConfirmModal
