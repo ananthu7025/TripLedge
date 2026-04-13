@@ -57,7 +57,6 @@ export function TripInspectionClient({ initialTrips }: TripInspectionClientProps
 
     const tabs = [
         { label: "All", value: "all" },
-        { label: "Pending", value: "pending" },
         { label: "Inspected", value: "inspected" },
         { label: "Completed", value: "completed" },
     ];

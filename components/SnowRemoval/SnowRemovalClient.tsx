@@ -57,7 +57,6 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
 
     const tabs = [
         { label: "All", value: "all", count: counts.all },
-        { label: "Pending", value: "pending", count: counts.pending },
         { label: "Inspected", value: "inspected", count: counts.inspected },
         { label: "Completed", value: "completed", count: counts.completed },
     ];
