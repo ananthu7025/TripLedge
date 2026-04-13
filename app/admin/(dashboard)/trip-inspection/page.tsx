@@ -41,9 +41,7 @@ export default async function TripInspectionPage() {
         length: t.length?.toString() || null,
         inspectedAt: t.inspectedAt?.toISOString() || null,
         completedAt: t.completedAt?.toISOString() || null,
-        zone: {
-            name: t.zone.name,
-        }
+        zone: t.zone ? { name: t.zone.name } : null,
     }));
 
     return (

@@ -41,7 +41,7 @@ export function TripInspectionClient({ initialTrips }: TripInspectionClientProps
                 t.tripId.toLowerCase().includes(query) ||
                 t.streetName?.toLowerCase().includes(query) ||
                 t.houseNo?.toLowerCase().includes(query) ||
-                t.zone.name.toLowerCase().includes(query)
+                t.zone?.name.toLowerCase().includes(query)
             );
         }
 
@@ -135,7 +135,7 @@ export function TripInspectionClient({ initialTrips }: TripInspectionClientProps
                                     <TableCell className="hidden md:table-cell px-6 py-5">
                                         <div className="flex justify-center">
                                             <Badge variant="outline" className="font-bold text-[10px] px-4 py-1 rounded-full border-slate-200 bg-white text-slate-500">
-                                                {trip.zone.name}
+                                                {trip.zone?.name ?? '—'}
                                             </Badge>
                                         </div>
                                     </TableCell>

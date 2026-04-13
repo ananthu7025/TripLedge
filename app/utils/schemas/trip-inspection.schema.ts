@@ -4,7 +4,7 @@ export const tripInspectionStatusSchema = z.enum(["pending", "inspected", "compl
 
 export const tripInspectionSchema = z.object({
     tripId: z.string().min(1),
-    zoneId: z.string().uuid(),
+    zoneId: z.string().uuid().nullable(),
     streetName: z.string().nullable(),
     houseNo: z.string().nullable(),
     status: tripInspectionStatusSchema,
@@ -27,5 +27,5 @@ export interface TripInspection extends TripInspectionFormData {
     id: string;
     zone: {
         name: string;
-    };
+    } | null;
 }

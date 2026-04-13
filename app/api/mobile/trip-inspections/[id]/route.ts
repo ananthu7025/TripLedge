@@ -32,7 +32,7 @@ export async function GET(
         // Parse zone polyline and extract first point as starting location for map
         let startPoint: { lat: number; lng: number } | null = null;
         try {
-            const points: { lat: number; lng: number; order: number }[] = JSON.parse(trip.zone.pointsGeojson);
+            const points: { lat: number; lng: number; order: number }[] = JSON.parse(trip.zone?.pointsGeojson ?? 'null');
             if (points.length > 0) {
                 const first = points.sort((a, b) => a.order - b.order)[0];
                 startPoint = { lat: first.lat, lng: first.lng };
