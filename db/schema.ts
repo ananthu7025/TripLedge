@@ -242,6 +242,7 @@ export const companySettings = pgTable('company_settings', {
   officeAddress: text('office_address'),
   officeLatitude: decimal('office_latitude', { precision: 10, scale: 7 }),
   officeLongitude: decimal('office_longitude', { precision: 10, scale: 7 }),
+  difficultyWeight: decimal('difficulty_weight', { precision: 5, scale: 3 }).default('0.200'),
   logoUrl: varchar('logo_url', { length: 255 }),
   supportEmail: varchar('support_email', { length: 100 }),
   supportPhone: varchar('support_phone', { length: 30 }),

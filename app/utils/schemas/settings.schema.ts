@@ -22,6 +22,12 @@ export const settingsSchema = z.object({
         .string()
         .min(1, { message: "Longitude is required" })
         .refine((val) => !isNaN(parseFloat(val)), { message: "Longitude must be a valid number" }),
+    difficultyWeight: z
+        .string()
+        .min(1, { message: "Weight is required" })
+        .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0 && parseFloat(val) <= 5, {
+            message: "Weight must be a number between 0 and 5",
+        }).optional().default("0.2"),
 });
 
 export type SettingsFormData = z.infer<typeof settingsSchema>;

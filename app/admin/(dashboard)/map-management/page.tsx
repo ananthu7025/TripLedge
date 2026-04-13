@@ -7,8 +7,8 @@ import { type Zone } from "@/app/utils/schemas/zone.schema";
 import { MapManagementClient } from "@/components/MapManagement";
 
 export const metadata = {
-  title: "Zone Management - Trip Ledge",
-  description: "Manage work zones on the map",
+  title: "Location Management - Trip Ledge",
+  description: "Manage work locations on the map",
 };
 
 export default async function MapManagementPage() {

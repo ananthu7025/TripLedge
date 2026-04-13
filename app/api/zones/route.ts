@@ -78,6 +78,46 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH /api/zones?id=xxx - Update zone name/type
+export async function PATCH(request: NextRequest) {
+  try {
+    const user = await requireAuth();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Zone ID is required' }, { status: 400 });
+    }
+
+    const { name, zoneType } = await request.json();
+
+    if (!name || !zoneType) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    await db.update(zones)
+      .set({ name, zoneType, updatedAt: new Date() })
+      .where(eq(zones.id, id));
+
+    await logAudit({
+      userId: user.id,
+      action: 'update_zone',
+      module: 'zones',
+      entityType: 'zone',
+      entityId: id,
+      metadata: { name, zoneType },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    console.error('Error updating zone:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // DELETE /api/zones?id=xxx - Delete a zone
 export async function DELETE(request: NextRequest) {
   try {

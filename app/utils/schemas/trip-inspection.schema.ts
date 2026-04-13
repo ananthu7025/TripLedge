@@ -9,6 +9,13 @@ export const tripInspectionSchema = z.object({
     houseNo: z.string().nullable(),
     status: tripInspectionStatusSchema,
     notes: z.string().nullable(),
+    inspectedUsers: z.string().nullable().optional(),
+    completedUsers: z.string().nullable().optional(),
+    capturedLatitude: z.string().nullable().optional(),
+    capturedLongitude: z.string().nullable().optional(),
+    highPoint: z.string().nullable().optional(),
+    lowPoint: z.string().nullable().optional(),
+    length: z.string().nullable().optional(),
     inspectedAt: z.string().nullable(),
     completedAt: z.string().nullable(),
 });

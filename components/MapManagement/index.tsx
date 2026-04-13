@@ -125,8 +125,8 @@ export function MapManagementClient({ initialZones, googleMapsApiKey }: MapManag
         <>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Zone Management</h1>
-                    <p className="text-sm text-muted-foreground">Manage work zones on the map</p>
+                    <h1 className="text-2xl font-bold text-foreground">Location Management</h1>
+                    <p className="text-sm text-muted-foreground">Manage work locations on the map</p>
                 </div>
                 <Button
                     onClick={() => {
@@ -136,7 +136,7 @@ export function MapManagementClient({ initialZones, googleMapsApiKey }: MapManag
                     variant="primary"
                     className="gap-2"
                 >
-                    <Plus className="h-4 w-4" /> Add Zone
+                    <Plus className="h-4 w-4" /> Add Location
                 </Button>
             </div>
             <div className="relative h-[500px] w-full rounded-xl border border-border bg-card shadow-lg overflow-hidden mb-6">
@@ -188,6 +188,7 @@ export function MapManagementClient({ initialZones, googleMapsApiKey }: MapManag
                 search={search}
                 onSearchChange={setSearch}
                 onDeleteClick={handleDeleteClick}
+                onEditSaved={fetchZones}
                 isLoading={isLoading}
             />
 
@@ -202,8 +203,8 @@ export function MapManagementClient({ initialZones, googleMapsApiKey }: MapManag
                 isOpen={isDeleteModalOpen}
                 onClose={() => { setIsDeleteModalOpen(false); setZoneToDelete(null); }}
                 onConfirm={handleDeleteConfirm}
-                title="Delete Zone"
-                message="Are you sure you want to delete this zone? This will also delete all associated jobs. This action cannot be undone."
+                title="Delete Location"
+                message="Are you sure you want to delete this location? This will also delete all associated jobs. This action cannot be undone."
                 itemName={zoneToDelete?.name}
                 isLoading={isLoading}
             />

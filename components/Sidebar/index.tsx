@@ -22,17 +22,19 @@ import {
   BookOpen,
   SlidersHorizontal,
   Mail,
+  BarChart2,
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { name: "Map Management", href: "/admin/map-management", icon: MapIcon },
+  { name: "Location Management", href: "/admin/map-management", icon: MapIcon },
   { name: "Trip Inspection", href: "/admin/trip-inspection", icon: HardHat },
   { name: "Snow Removal", href: "/admin/snow-removal", icon: Snowflake },
   { name: "Dropdown Options", href: "/admin/dropdown-options", icon: SlidersHorizontal },
   { name: "Check-In Requests", href: "/admin/check-in-requests", icon: UserCheck, badge: 2 },
   { name: "Contact Requests", href: "/admin/contact-requests", icon: Mail },
   { name: "Reports", href: "/admin/reports", icon: FileText },
+  { name: "Performance", href: "/admin/performance", icon: BarChart2 },
   { name: "Targets", href: "/admin/targets", icon: Target },
   { name: "Blogs", href: "/admin/blogs", icon: BookOpen },
   { name: "Attendance", href: "/admin/attendance", icon: CalendarDays },

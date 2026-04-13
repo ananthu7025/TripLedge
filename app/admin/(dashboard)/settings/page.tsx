@@ -19,7 +19,8 @@ export default async function SettingsPage() {
         city: settingsData?.city || "North Battleford, SK",
         officeAddress: settingsData?.officeAddress || "",
         officeLatitude: settingsData?.officeLatitude?.toString() || "",
-        officeLongitude: settingsData?.officeLongitude?.toString() || ""
+        officeLongitude: settingsData?.officeLongitude?.toString() || "",
+        difficultyWeight: (settingsData as any)?.difficultyWeight?.toString() || "0.2",
     };
 
     // Fetch User Profile

@@ -3,6 +3,7 @@
 
 import { cn } from "@/app/utils/utils";
 import { Search, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useMemo } from 'react';
 import { Tabs } from "@/components/ui/Tabs";
 import { Badge } from "@/components/ui/Badge";
@@ -24,6 +25,7 @@ interface SnowRemovalClientProps {
 }
 
 export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
+    const router = useRouter();
     const [activeFilter, setActiveFilter] = useState<SnowRemovalStatus | 'all'>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -66,6 +68,14 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
         return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     };
 
+    const parseCrewCount = (crewJson: string | null | undefined) => {
+        if (!crewJson) return '—';
+        try {
+            const arr = JSON.parse(crewJson);
+            return Array.isArray(arr) ? `${arr.length} member${arr.length !== 1 ? 's' : ''}` : '—';
+        } catch { return '—'; }
+    };
+
     return (
         <div className="space-y-6">
             <div>
@@ -96,15 +106,16 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                             <TableHead className="w-24 px-6 h-14 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Snow ID</TableHead>
                             <TableHead className="px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Location</TableHead>
                             <TableHead className="px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider text-center">Status</TableHead>
-                            <TableHead className="hidden lg:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Created</TableHead>
+                            <TableHead className="hidden lg:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Inspection Start</TableHead>
                             <TableHead className="hidden lg:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Completed</TableHead>
+                            <TableHead className="hidden xl:table-cell px-6 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Crew</TableHead>
                             <TableHead className="w-20 text-right pr-8 font-bold text-slate-500 uppercase text-[11px] tracking-wider">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredRemovals.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-64 text-center text-slate-400">
+                                <TableCell colSpan={7} className="h-64 text-center text-slate-400">
                                     No snow removal operations found
                                 </TableCell>
                             </TableRow>
@@ -135,13 +146,21 @@ export function SnowRemovalClient({ initialRemovals }: SnowRemovalClientProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden lg:table-cell px-6 py-5 text-xs font-medium text-slate-400">
-                                        {formatDate(removal.createdAt)}
+                                        {formatDate(removal.inspectedAt)}
                                     </TableCell>
                                     <TableCell className="hidden lg:table-cell px-6 py-5 text-xs font-medium text-slate-400">
                                         {formatDate(removal.completedAt)}
                                     </TableCell>
+                                    <TableCell className="hidden xl:table-cell px-6 py-5 text-xs font-medium text-slate-400">
+                                        {parseCrewCount(removal.crewMembers)}
+                                    </TableCell>
                                     <TableCell className="text-right pr-6 py-5">
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-slate-100 rounded-full">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-9 w-9 hover:bg-slate-100 rounded-full"
+                                            onClick={() => router.push(`/admin/snow-removal/${removal.id}`)}
+                                        >
                                             <Eye className="h-5 w-5 text-slate-400" />
                                         </Button>
                                     </TableCell>

@@ -6,7 +6,7 @@ import { api } from "@/app/utils/api-client";
 import { useToast } from "@/lib/utils/useToast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@/app/utils/hooks/useApi";
-import { User, Building, MapPin, Save, Shield } from "lucide-react";
+import { User, Building, MapPin, Save, Shield, Calculator } from "lucide-react";
 import { API_ENDPOINTS, SUCCESS_MESSAGES } from "@/app/utils/constants";
 import {
     profileUpdateSchema,
@@ -106,6 +106,13 @@ export function SettingsClient({ initialSettings, initialProfile }: SettingsClie
                             }`}
                     >
                         <Building className="h-3.5 w-3.5" /> Company
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("scoring")}
+                        className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all gap-1 ${activeTab === "scoring" ? "bg-background text-foreground shadow-sm" : "hover:text-foreground"
+                            }`}
+                    >
+                        <Calculator className="h-3.5 w-3.5" /> Scoring
                     </button>
                 </div>
 
@@ -211,6 +218,51 @@ export function SettingsClient({ initialSettings, initialProfile }: SettingsClie
                                         className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2 gap-2"
                                     >
                                         <Shield className="h-4 w-4" /> {passwordMutation.isLoading ? "Updating..." : "Update Password"}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Scoring Tab */}
+                {activeTab === "scoring" && (
+                    <div className="space-y-4">
+                        <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <h3 className="text-base font-semibold leading-none tracking-tight">Trip Scoring Configuration</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">Configure the difficulty weight used in the trip score formula.</p>
+                                </div>
+                                <div className="bg-muted/40 rounded-lg p-4 font-mono text-sm space-y-1">
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Formula</p>
+                                    <p>Difficulty = High Point − Low Point</p>
+                                    <p>Trip Score = Length × (1 + Difficulty × <strong>Weight</strong>)</p>
+                                </div>
+                                <form onSubmit={companyForm.handleSubmit(onSaveCompany)} className="space-y-4">
+                                    <div className="max-w-xs">
+                                        <label className="text-sm font-medium leading-none text-foreground">Difficulty Weight</label>
+                                        <input
+                                            type="number"
+                                            step="0.05"
+                                            min="0.01"
+                                            max="5"
+                                            {...companyForm.register("difficultyWeight")}
+                                            placeholder="e.g. 0.2"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring mt-1"
+                                            disabled={companyMutation.isLoading}
+                                        />
+                                        {companyForm.formState.errors.difficultyWeight && (
+                                            <p className="text-xs text-destructive mt-1">{companyForm.formState.errors.difficultyWeight.message}</p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground mt-1">Recommended range: 0.1 – 0.5. Higher values reward difficulty more.</p>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={companyMutation.isLoading}
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2"
+                                    >
+                                        <Save className="h-4 w-4" /> {companyMutation.isLoading ? "Saving..." : "Save Scoring Settings"}
                                     </button>
                                 </form>
                             </div>

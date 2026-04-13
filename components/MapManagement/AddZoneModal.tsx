@@ -55,7 +55,7 @@ export function AddZoneModal({ isOpen, onClose, onStartDrawing, nextLocationNumb
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-card text-card-foreground rounded-xl shadow-xl max-w-md w-full border border-border">
                 <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-xl font-bold">Add New Zone</h2>
+                    <h2 className="text-xl font-bold">Add New Location</h2>
                     <button
                         onClick={onClose}
                         className="p-1 hover:bg-muted rounded-md transition-colors"
@@ -68,7 +68,7 @@ export function AddZoneModal({ isOpen, onClose, onStartDrawing, nextLocationNumb
                     <InputText
                         hookForm={form}
                         field="name"
-                        label="Zone Name"
+                        label="Location Name"
                         placeholder={`Location ${nextLocationNumber}`}
                         labelMandatory
                     />
@@ -77,7 +77,7 @@ export function AddZoneModal({ isOpen, onClose, onStartDrawing, nextLocationNumb
                         <InputSelect
                             hookForm={form}
                             field="zoneType"
-                            label="Zone Type"
+                            label="Location Type"
                             options={zoneTypeOptions}
                         />
                     </div>

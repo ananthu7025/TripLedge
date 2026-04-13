@@ -32,6 +32,13 @@ export default async function TripInspectionPage() {
         houseNo: t.houseNo,
         status: t.status as any,
         notes: t.notes,
+        inspectedUsers: t.inspectedUsers,
+        completedUsers: t.completedUsers,
+        capturedLatitude: t.capturedLatitude?.toString() || null,
+        capturedLongitude: t.capturedLongitude?.toString() || null,
+        highPoint: t.highPoint?.toString() || null,
+        lowPoint: t.lowPoint?.toString() || null,
+        length: t.length?.toString() || null,
         inspectedAt: t.inspectedAt?.toISOString() || null,
         completedAt: t.completedAt?.toISOString() || null,
         zone: {
