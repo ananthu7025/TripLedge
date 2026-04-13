@@ -38,16 +38,12 @@ export async function POST(
             where: eq(zones.id, id),
         });
 
-        if (!zone) {
-            return NextResponse.json({ error: 'Zone not found' }, { status: 404 });
-        }
-
         const now = new Date();
         const tripId = await generateTripId();
 
         const [trip] = await db.insert(tripInspections).values({
             tripId,
-            zoneId: zone.id,
+            zoneId: zone?.id ?? null,
             status: 'inspected',
             inspectedBy: user.id,
             inspectedAt: now,
@@ -79,8 +75,8 @@ export async function POST(
             action: 'add_trip_from_zone',
             module: 'zones',
             entityType: 'zone',
-            entityId: zone.id,
-            metadata: { zoneName: zone.name, tripId: trip.tripId },
+            entityId: zone?.id ?? undefined,
+            metadata: { zoneName: zone?.name ?? null, tripId: trip.tripId },
         });
 
         return NextResponse.json({ success: true, id: trip.id, tripId: trip.tripId });

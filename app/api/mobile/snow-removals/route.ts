@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
         const {
             street_name,
             house_no,
+            zone_id,
             issues,
             additional_comments,
             before_photos,
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
 
         const [snow] = await db.insert(snowRemovals).values({
             snowId,
+            zoneId: zone_id ? String(zone_id) : null,
             status: 'inspected',
             inspectedBy: user.id,
             inspectedAt: now,

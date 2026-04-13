@@ -53,7 +53,7 @@ export const zoneTechnicians = pgTable('zone_technicians', {
 export const tripInspections = pgTable('trip_inspections', {
   id: uuid('id').primaryKey().defaultRandom(),
   tripId: varchar('trip_id', { length: 20 }).unique().notNull(), // T-001, T-002...
-  zoneId: uuid('zone_id').references(() => zones.id).notNull(),
+  zoneId: uuid('zone_id').references(() => zones.id),
   inspectedBy: uuid('inspected_by').references(() => users.id), // primary user who submitted inspection
   completedBy: uuid('completed_by').references(() => users.id), // primary user who submitted completion
   streetName: varchar('street_name', { length: 100 }),
@@ -81,6 +81,7 @@ export const tripInspections = pgTable('trip_inspections', {
 export const snowRemovals = pgTable('snow_removals', {
   id: uuid('id').primaryKey().defaultRandom(),
   snowId: varchar('snow_id', { length: 20 }).unique().notNull(), // S-001, S-002...
+  zoneId: uuid('zone_id').references(() => zones.id),
   inspectedBy: uuid('inspected_by').references(() => users.id), // primary user who submitted inspection
   completedBy: uuid('completed_by').references(() => users.id), // primary user who submitted completion
   streetName: varchar('street_name', { length: 100 }),
@@ -318,6 +319,10 @@ export const tripInspectionsRelations = relations(tripInspections, ({ one }) => 
 }));
 
 export const snowRemovalsRelations = relations(snowRemovals, ({ one }) => ({
+  zone: one(zones, {
+    fields: [snowRemovals.zoneId],
+    references: [zones.id],
+  }),
   inspectedByUser: one(users, {
     fields: [snowRemovals.inspectedBy],
     references: [users.id],

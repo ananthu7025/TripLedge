@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/ananthu/TripLedgeApp/src/api",
+      "/Users/ananthu/TripLedgeApp/src/screens/app"
+    ]
+  }
+}
